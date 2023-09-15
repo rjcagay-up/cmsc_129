@@ -122,14 +122,21 @@ public class FileLoaderGUI extends JFrame {
         // Populate the table rows
         for (int row = 1; row < lines.length; row++) {
             String[] cells = lines[row].trim().split(",");
-            for (int col = 0; col < numSymbols; col++) {
-                if( )
+            for (int col = 0; col < numSymbols+2; col++) {
+                // if (col == 0) {
+                //     tableModel.setValueAt(cells[0], row - 1, col);
+                // } else {
+                //     tableModel.setValueAt(cells[col], row - 1, col);
+                // }
 
-                if (col == 0) {
-                    tableModel.setValueAt(cells[0], row - 1, col);
+                // System.out.print(cells[col] + " ");
+
+                if (cells[col].equals("-") || cells[col].equals("+") || cells[col].equals("")) {
+                    cells[col+1] = cells[col+1] + cells[col];
                 } else {
-                    tableModel.setValueAt(cells[col], row - 1, col);
+                    tableModel.setValueAt(cells[col], row - 1, col-1);
                 }
+
             }
         }
     }
