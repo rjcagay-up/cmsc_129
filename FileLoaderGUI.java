@@ -11,45 +11,17 @@ public class FileLoaderGUI extends JFrame {
 
     public FileLoaderGUI() {
         setTitle("File Loader");
-        setSize(600, 400); // Increased the width to provide more space
+        setSize(800, 600); // Adjusted the initial size
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Create a panel for the main content
-        JPanel mainPanel = new JPanel(new GridLayout(1, 3)); // Change the layout to 1 row and 3 columns
+        // Create a panel for the main content with GridBagLayout
+        JPanel mainPanel = new JPanel(new GridBagLayout());
         // Set the background color of the JFrame (the entire window) to pink
         getContentPane().setBackground(Color.PINK);
 
-
-        // Create a panel for the Input label and its placeholder
-        JPanel inputPanel = new JPanel(new BorderLayout());
-        JLabel inputLabel = new JLabel("Input:");
-        inputPanel.add(inputLabel, BorderLayout.NORTH);
-        inputTextArea = new JTextArea(10, 40);
-        JScrollPane inputScrollPane = new JScrollPane(inputTextArea);
-        inputPanel.add(inputScrollPane, BorderLayout.CENTER);
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
-        mainPanel.add(inputPanel);
-
-        // Create a panel for the Transition table label and its placeholder
-        JPanel dfaPanel = new JPanel(new BorderLayout());
-        JLabel dfaLabel = new JLabel("Transition table:");
-        dfaPanel.add(dfaLabel, BorderLayout.NORTH);
-        tableModel = new DefaultTableModel();
-        dfaTable = new JTable(tableModel);
-        JScrollPane dfaScrollPane = new JScrollPane(dfaTable);
-        dfaPanel.add(dfaScrollPane, BorderLayout.CENTER);
-        dfaPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
-        mainPanel.add(dfaPanel);
-
-        // Create a panel for the Output label and its placeholder
-        JPanel outputPanel = new JPanel(new BorderLayout());
-        JLabel outputLabel = new JLabel("Output:");
-        outputPanel.add(outputLabel, BorderLayout.NORTH);
-        outputTextArea = new JTextArea(10, 40);
-        JScrollPane outputScrollPane = new JScrollPane(outputTextArea);
-        outputPanel.add(outputScrollPane, BorderLayout.CENTER);
-        outputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
-        mainPanel.add(outputPanel);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH; // Allow components to grow both horizontally and vertically
+        gbc.weightx = 1.0; // Make components take up available horizontal space
 
         // Create a panel for the buttons
         JPanel buttonPanel = new JPanel();
@@ -60,11 +32,64 @@ public class FileLoaderGUI extends JFrame {
         buttonPanel.add(loadButton);
         buttonPanel.add(processButton);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 3; // Span the buttons across all columns
+        mainPanel.add(buttonPanel, gbc); // Put buttons above the UI
 
-        // Add the main content and button panel to the frame
-        add(mainPanel, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-    }
+       // Create a panel for the Input label and its placeholder
+       JPanel inputPanel = new JPanel(new BorderLayout());
+       JLabel inputLabel = new JLabel("Input:");
+       inputPanel.add(inputLabel, BorderLayout.NORTH);
+       inputTextArea = new JTextArea(10, 40);
+       JScrollPane inputScrollPane = new JScrollPane(inputTextArea);
+       inputPanel.add(inputScrollPane, BorderLayout.CENTER);
+       inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
+       gbc.gridx = 1;
+       gbc.gridy = 1;
+       gbc.gridwidth = 1;
+       gbc.weighty = 2.0; // Increase weighty value for more vertical space
+       mainPanel.add(inputPanel, gbc); // Put Input panel on the left
+
+       // Create a panel for the Transition table label and its placeholder
+       JPanel dfaPanel = new JPanel(new BorderLayout());
+       JLabel dfaLabel = new JLabel("Transition table:");
+       dfaPanel.add(dfaLabel, BorderLayout.NORTH);
+       tableModel = new DefaultTableModel();
+       dfaTable = new JTable(tableModel);
+       JScrollPane dfaScrollPane = new JScrollPane(dfaTable);
+       dfaPanel.add(dfaScrollPane, BorderLayout.CENTER);
+       dfaPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
+       gbc.gridx = 0;
+       gbc.gridy = 1;
+       gbc.weighty = 2.0; // Increase weighty value for more vertical space
+       mainPanel.add(dfaPanel, gbc); // Put Transition table panel in the center
+
+       // Create a panel for the Output label and its placeholder
+       JPanel outputPanel = new JPanel(new BorderLayout());
+       JLabel outputLabel = new JLabel("Output:");
+       outputPanel.add(outputLabel, BorderLayout.NORTH);
+       outputTextArea = new JTextArea(10, 40);
+       JScrollPane outputScrollPane = new JScrollPane(outputTextArea);
+       outputPanel.add(outputScrollPane, BorderLayout.CENTER);
+       outputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
+       gbc.gridx = 2;
+       gbc.gridy = 1;
+       gbc.weighty = 2.0; // Increase weighty value for more vertical space
+       mainPanel.add(outputPanel, gbc); // Put Output panel on the right
+
+       // Add an empty panel to fill remaining vertical space
+       JPanel emptyPanel = new JPanel();
+       gbc.gridx = 0;
+       gbc.gridy = 2;
+       gbc.gridwidth = 3;
+       gbc.weighty = 1.0; // Make the empty panel take up available vertical space
+       mainPanel.add(emptyPanel, gbc);
+
+       // Add the main content to the frame
+       add(mainPanel, BorderLayout.CENTER);
+   }
+
 
     // Method for loading files
     private void loadFiles() {
