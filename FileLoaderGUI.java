@@ -8,42 +8,60 @@ public class FileLoaderGUI extends JFrame {
     private JTable dfaTable;
     private DefaultTableModel tableModel;
     private JTextArea outputTextArea;
+    //private StringBuilder content;
+    //private JPanel mainPanel;
+    private JPanel statusPanel;
+    //private GridBagConstraints gbc;
 
     public FileLoaderGUI() {
-        setTitle("File Loader");
+        setTitle("CMSC 129 DFA Checker");
         setSize(800, 600); // Adjusted the initial size
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        //content = new StringBuilder();
 
-        // Create a panel for the main content with GridBagLayout
+     // Create a panel for the main content with GridBagLayout
         JPanel mainPanel = new JPanel(new GridBagLayout());
-        // Set the background color of the JFrame (the entire window) to pink
-        getContentPane().setBackground(Color.PINK);
-
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH; // Allow components to grow both horizontally and vertically
         gbc.weightx = 1.0; // Make components take up available horizontal space
 
-        // Create a panel for the buttons
+    // Create a panel for the Status panel
+       statusPanel = new JPanel();
+       JLabel statusLabel = new JLabel("Status:");
+       //Label UI
+       statusPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+       statusPanel.add(statusLabel);
+
+     // Create a panel for the Load and Process buttons
+        // Load Button
         JPanel buttonPanel = new JPanel();
         JButton loadButton = new JButton("Load Files");
         loadButton.addActionListener(e -> loadFiles());
+        buttonPanel.add(loadButton);
+
+        // Process Button
         JButton processButton = new JButton("Process");
         processButton.addActionListener(e -> processFiles());
-        buttonPanel.add(loadButton);
         buttonPanel.add(processButton);
+       
+        // Panel UI
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 3; // Span the buttons across all columns
         mainPanel.add(buttonPanel, gbc); // Put buttons above the UI
+        buttonPanel.setBackground(Color.pink); //Set color to the panel
 
-       // Create a panel for the Input label and its placeholder
+     // Create a panel for the Input label and its placeholder
        JPanel inputPanel = new JPanel(new BorderLayout());
        JLabel inputLabel = new JLabel("Input:");
+
+       // Panel UI
        inputPanel.add(inputLabel, BorderLayout.NORTH);
        inputTextArea = new JTextArea(10, 40);
-       JScrollPane inputScrollPane = new JScrollPane(inputTextArea);
+       JScrollPane inputScrollPane = new JScrollPane(inputTextArea); // Scroll function for the pane
        inputPanel.add(inputScrollPane, BorderLayout.CENTER);
+       inputPanel.setBackground(Color.pink);
        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
        gbc.gridx = 1;
        gbc.gridy = 1;
@@ -51,24 +69,29 @@ public class FileLoaderGUI extends JFrame {
        gbc.weighty = 2.0; // Increase weighty value for more vertical space
        mainPanel.add(inputPanel, gbc); // Put Input panel on the left
 
-       // Create a panel for the Transition table label and its placeholder
+     // Create a panel for the Transition table label and its placeholder
        JPanel dfaPanel = new JPanel(new BorderLayout());
        JLabel dfaLabel = new JLabel("Transition table:");
+
+       // Panel UI
        dfaPanel.add(dfaLabel, BorderLayout.NORTH);
        tableModel = new DefaultTableModel();
        dfaTable = new JTable(tableModel);
        JScrollPane dfaScrollPane = new JScrollPane(dfaTable);
        dfaPanel.add(dfaScrollPane, BorderLayout.CENTER);
+       dfaPanel.setBackground(Color.pink); // Set Panel color
        dfaPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
        gbc.gridx = 0;
        gbc.gridy = 1;
        gbc.weighty = 2.0; // Increase weighty value for more vertical space
        mainPanel.add(dfaPanel, gbc); // Put Transition table panel in the center
 
-       // Create a panel for the Output label and its placeholder
+     // Create a panel for the Output label and its placeholder
        JPanel outputPanel = new JPanel(new BorderLayout());
        JLabel outputLabel = new JLabel("Output:");
        outputPanel.add(outputLabel, BorderLayout.NORTH);
+       // Panel UI
+       
        outputTextArea = new JTextArea(10, 40);
        JScrollPane outputScrollPane = new JScrollPane(outputTextArea);
        outputPanel.add(outputScrollPane, BorderLayout.CENTER);
@@ -78,13 +101,15 @@ public class FileLoaderGUI extends JFrame {
        gbc.weighty = 2.0; // Increase weighty value for more vertical space
        mainPanel.add(outputPanel, gbc); // Put Output panel on the right
 
-       // Add an empty panel to fill remaining vertical space
-       JPanel emptyPanel = new JPanel();
+     
+
+       //Panel UI
        gbc.gridx = 0;
        gbc.gridy = 2;
        gbc.gridwidth = 3;
-       gbc.weighty = 1.0; // Make the empty panel take up available vertical space
-       mainPanel.add(emptyPanel, gbc);
+       gbc.weighty = 1.0;
+       statusPanel.setBackground(Color.yellow);
+       mainPanel.add(statusPanel, gbc);
 
        // Add the main content to the frame
        add(mainPanel, BorderLayout.CENTER);
@@ -93,12 +118,14 @@ public class FileLoaderGUI extends JFrame {
 
     // Method for loading files
     private void loadFiles() {
-        JFileChooser fileChooser = new JFileChooser(); // Create a file chooser dialog
+        JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir")); // Create a file chooser dialog and set the initial directory to the current working directory
         int result = fileChooser.showOpenDialog(this); // Show the dialog and get the user's choice
 
         if (result == JFileChooser.APPROVE_OPTION) { // If the user chooses a file
             File file = fileChooser.getSelectedFile(); // Get the selected file
             String fileName = file.getName(); // Get the name of the file
+
+                
 
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(file)); // Create a reader for the file
@@ -111,8 +138,10 @@ public class FileLoaderGUI extends JFrame {
 
                 if (fileName.endsWith(".in")) { // If the file has a .in extension
                     inputTextArea.setText(content.toString()); // Set the text in the inputTextArea
+                    status(true, ".in");
                 } else if (fileName.endsWith(".dfa")) { // If the file has a .dfa extension
                     processDFAFile(content.toString()); // Process and display the .dfa file
+                    status(true, ".dfa");
                 } else {
                     JOptionPane.showMessageDialog(this, "Unsupported file format."); // Show an error message for unsupported file formats
                 }
@@ -121,6 +150,8 @@ public class FileLoaderGUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "Error loading the file."); // Show an error message for file loading
             }
         }
+
+        
     }
 
     // Method for processing DFA files
@@ -176,7 +207,52 @@ public class FileLoaderGUI extends JFrame {
         // You can use inputTextArea.getText() and dfaTextArea.getText() to access the loaded content
         // and update outputTextArea with the result
         // For this example, let's just copy the input to output
+        status(true,"output");
         outputTextArea.setText(inputTextArea.getText());
+    }
+
+    private void status(boolean isSuccess, String fileType) {
+        statusPanel.removeAll();
+        JLabel okLabel = new JLabel();
+        okLabel.setName("okLabel");
+    
+        if (isSuccess) {
+            if (fileType.equals(".in") || fileType.equals(".dfa")){
+                okLabel.setText("Status: SUCCESS importing " + fileType);
+            
+            }
+            else if (fileType.equals("output")){
+                okLabel.setText("Status: Processing " + fileType);
+            }
+            okLabel.setForeground(Color.BLACK); // Set text color to green for success
+
+        } else {
+            okLabel.setText("Status: ERROR");
+            okLabel.setForeground(Color.RED); // Set text color to red for error
+        }
+
+        // Debugging information
+        System.out.println("Adding label to Panel");
+    
+        // Check if an "okLabel" component exists in the statusPanel
+        Component[] components = statusPanel.getComponents();
+        for (Component component : components) {
+            if (component.getName() != null && component.getName().equals("okLabel")) {
+                okLabel.setText("");
+                statusPanel.remove(okLabel); // Remove the previous okLabel
+                okLabel.setText("SUCCESS importing " + fileType);
+               
+                System.out.println("Removed");
+            }
+            
+        }
+        
+        // Add the new okLabel
+        statusPanel.add(okLabel);
+
+        // Refresh the panel
+        statusPanel.revalidate();
+        statusPanel.repaint();
     }
 
     public static void main(String[] args) {
