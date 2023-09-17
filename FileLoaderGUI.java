@@ -261,7 +261,7 @@ public class FileLoaderGUI extends JFrame {
                 }
 
             }
-
+    
             // check if end state is final state, refering to the DFA
             if (if_FinalState(currentState)) {
 
@@ -280,7 +280,39 @@ public class FileLoaderGUI extends JFrame {
 
         }
       status(true,"output");
-      outputTextArea.setText(inputTextArea.getText());
+    
+    
+    // Display the output in the outputTextArea
+     //outputTextArea.setText(outputTextArea.toString());
+     
+    
+     outputTextArea.setText(outputTextArea.getText());
+
+      // Create a StringBuilder to store the output
+    StringBuilder outputStringBuilder = new StringBuilder();
+    
+    // Iterate through the output lines and append them to the StringBuilder
+    String[] outputLines = outputTextArea.getText().split("\n");
+    for (String outputLine : outputLines) {
+        outputStringBuilder.append(outputLine).append("\n");
+    }
+
+    // Define the file path for saving the results
+    String outputPath = System.getProperty("user.dir") + File.separator + "strings.out";
+
+    // Try to write the output to the file
+    try (FileWriter writer = new FileWriter(outputPath)) {
+        writer.write(outputStringBuilder.toString());
+        writer.flush();
+        writer.close();
+        status(true, "output");
+
+        // Display a message to inform the user that the results have been saved
+        JOptionPane.showMessageDialog(this, "Results have been saved to 'strings.out'.");
+    } catch (IOException e) {
+        e.printStackTrace(); // Handle the exception appropriately
+        JOptionPane.showMessageDialog(this, "Error saving the results to 'strings.out'.");
+    }
 
     }
 
