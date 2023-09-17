@@ -150,33 +150,182 @@ public class FileLoaderGUI extends JFrame {
 
         // Populate the table rows
         for (int row = 1; row < lines.length; row++) {
+
+            // Splits the DFA file format into individual states
             String[] cells = lines[row].trim().split(",");
+
+            // Goes through each state and encodes into the table
             for (int col = 0; col < numSymbols+2; col++) {
-                // if (col == 0) {
-                //     tableModel.setValueAt(cells[0], row - 1, col);
-                // } else {
-                //     tableModel.setValueAt(cells[col], row - 1, col);
-                // }
 
-                // System.out.print(cells[col] + " ");
-
+                // due to splitting with "," character, "" are possible characters to encounter because of DFA format
+                // when "" or "-" or "+" characters are encountered, it is fused with the state string of the next index
                 if (cells[col].equals("-") || cells[col].equals("+") || cells[col].equals("")) {
                     cells[col+1] = cells[col+1] + cells[col];
-                } else {
+                } else { // each column for each row is filled with the corresponding state, following the DFA file
                     tableModel.setValueAt(cells[col], row - 1, col-1);
                 }
 
             }
         }
+
     }
 
     // Method for processing files (placeholder for actual processing logic)
     private void processFiles() {
-        // Add your processing logic here
-        // You can use inputTextArea.getText() and dfaTextArea.getText() to access the loaded content
-        // and update outputTextArea with the result
-        // For this example, let's just copy the input to output
-        outputTextArea.setText(inputTextArea.getText());
+
+        // initializing variables
+        int startState = 0;
+        int currentState = 0;
+        String nextState = "";
+
+        // Get encoded text in Input Text Area
+        String inputText = inputTextArea.getText();
+
+        // Get possible inputs from DFA table headers
+        String inputs = "";
+        for (int col = 1; col < tableModel.getColumnCount(); col++) {
+            inputs += (String) tableModel.getColumnName(col);
+        }
+
+        // Splits string inputs into possible character inputs from input strings
+        String[] inputPossible = inputs.split("");
+
+        startState = find_startState();
+
+        // Splits the content into individual input strings
+        String[] lines = inputText.split("\n");
+
+        // Goes through each of the input strings
+        for (int inputString = 0; inputString < lines.length; inputString++) {
+
+            // begins with start state
+            currentState = startState;
+
+            // Uncomment line to track each input string
+            // System.out.println("String: " + lines[inputString]);
+            
+            // Splits the input string into individual characters
+            String[] inputStringCharacters = lines[inputString].split("");
+            
+            // Goes through each of the individual characters of the current input string
+            for (int character = 0; character < inputStringCharacters.length; character++){
+
+                // Uncomment line to track current state and read character
+                // System.out.println("\nCurrent State: " + (String) tableModel.getValueAt(currentState, 0) + " Character Read: " + inputStringCharacters[character]);
+                
+                // Goes through each of the possible inputs and checks for matches
+                for(int inputCheck = 0; inputCheck < inputs.length(); inputCheck++) {
+
+                    // if it matches, it accesses the state on the column of the input and row of the current State
+                    if (inputStringCharacters[character].equals(inputPossible[inputCheck])) {
+                        
+                        // the next state is designated, depending on the current state and the input character read in the string
+                        // this refers again to the constructed DFA table
+                        nextState = (String) tableModel.getValueAt(currentState, inputCheck+1);
+
+                        // the current state is changed to the next state
+                        currentState = findState(nextState);
+                        
+                    }
+
+                }
+
+            }
+
+            // check if end state is final state, refering to the DFA
+            if (if_FinalState(currentState)) {
+
+                // if the end state is a final state, the input string is accepted by the machine and so is INVALID
+                outputTextArea.append("VALID\n");
+                
+            } else {
+
+                // if the end state is not a final state, the input string is not accepted by the machine and so is INVALID
+                outputTextArea.append("INVALID\n");
+                
+            }
+
+            // Uncomment to track when DFA tracking for input string is done
+            // System.out.println("End...\n");
+
+        }
+
+    }
+
+    // Method for finding start state in the constructed DFA table
+    private int find_startState() {
+
+        // initializing variables
+        int startState = 0;
+
+        // find the start state, number of rows in the table represents number of states
+        for (int state = 0; state < tableModel.getRowCount(); state++) {
+
+            // only start and final states have two characters in their table
+            // this is to avoid going beyond index with the other states having only single characters
+            // if the state only has one character, it is not the start state, continue
+            if (((String) tableModel.getValueAt(state, 0)).length() == 2) {
+                
+                // retrieves object value of set row and column on the DFA table created and turn into string
+                // string is then split per character
+                String[] stateString = ((String) tableModel.getValueAt(state, 0)).split("");
+                    
+                // checks the presence of "-" character, which denotes the state as start state
+                if (stateString[1].equals("-")) {
+
+                    // the detected starting state will be designated as the first current state for the next part
+                    // the row index of the start state is stored in this variable
+                    startState = state;
+                    break;
+                    
+                }
+
+            }
+
+        }
+
+        return startState;
+    }
+
+    // Method for finding the row index next state, refering to the constructed DFA table
+    private int findState(String nextState) {
+        
+        // initializing variable/s
+        int nextcurrentState = 0;
+
+        // go through each of the listed states on the first column and find the next state
+        for (int state = 0; state < tableModel.getRowCount(); state++) {
+
+            // retrieves object value of set row and column on the DFA table created and turn into string
+            // string is then split per character
+            String[] stateString = ((String) tableModel.getValueAt(state, 0)).split("");
+
+            // if nextState and the listed state match, the row index of this state is accessed
+            // else, continue
+            if(nextState.equals(stateString[0])) {
+                nextcurrentState = state;
+            }
+
+        }
+        
+        return nextcurrentState; //returns next currentState row index
+
+    }
+
+    // Method to use to see if current state is final state
+    private boolean if_FinalState (int currentState) {
+
+        // state name of row index currentState column index 0 is accessed (the state being checked)
+        String current = (String) tableModel.getValueAt(currentState, 0);
+
+        // presence of "+" character denotes state being final state
+        if (current.contains("+")) {
+            return true;
+        }
+
+        // else
+        return false;
+
     }
 
     public static void main(String[] args) {
