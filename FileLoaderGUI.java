@@ -1,65 +1,69 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.*;
 import java.io.*;
 
-// Define the FileLoaderGUI class, which extends JFrame
 public class FileLoaderGUI extends JFrame {
-    private JTextArea inputTextArea; // Text area for user input
-    private JTable dfaTable; // Table for the transition table
-    private DefaultTableModel tableModel; // Table model for the JTable
+    private JTextArea inputTextArea;
+    private JTable dfaTable;
+    private DefaultTableModel tableModel;
+    private JTextArea outputTextArea;
 
-    // Constructor for the FileLoaderGUI class
     public FileLoaderGUI() {
-        setTitle("File Loader"); // Set the window title
-        setSize(500, 400); // Set the window size
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Set the close operation
+        setTitle("File Loader");
+        setSize(600, 400); // Increased the width to provide more space
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JPanel mainPanel = new JPanel(); // Create the main panel
-        mainPanel.setLayout(new GridLayout(4, 1)); // Set the layout as a grid with 4 rows and 1 column
+        // Create a panel for the main content
+        JPanel mainPanel = new JPanel(new GridLayout(1, 3)); // Change the layout to 1 row and 3 columns
+        // Set the background color of the JFrame (the entire window) to pink
+        getContentPane().setBackground(Color.PINK);
 
-        JLabel inputLabel = new JLabel("Input:"); // Create a label for input
-        mainPanel.add(inputLabel); // Add the label to the main panel
 
-        inputTextArea = new JTextArea(10, 40); // Create a text area for input
-        JScrollPane inputScrollPane = new JScrollPane(inputTextArea); // Create a scroll pane for the text area
-        mainPanel.add(inputScrollPane); // Add the scroll pane to the main panel
+        // Create a panel for the Input label and its placeholder
+        JPanel inputPanel = new JPanel(new BorderLayout());
+        JLabel inputLabel = new JLabel("Input:");
+        inputPanel.add(inputLabel, BorderLayout.NORTH);
+        inputTextArea = new JTextArea(10, 40);
+        JScrollPane inputScrollPane = new JScrollPane(inputTextArea);
+        inputPanel.add(inputScrollPane, BorderLayout.CENTER);
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
+        mainPanel.add(inputPanel);
 
-        JLabel dfaLabel = new JLabel("Transition table:"); // Create a label for the transition table
-        mainPanel.add(dfaLabel); // Add the label to the main panel
-
-        // Initialize the table model with empty data and headers
+        // Create a panel for the Transition table label and its placeholder
+        JPanel dfaPanel = new JPanel(new BorderLayout());
+        JLabel dfaLabel = new JLabel("Transition table:");
+        dfaPanel.add(dfaLabel, BorderLayout.NORTH);
         tableModel = new DefaultTableModel();
-        dfaTable = new JTable(tableModel); // Create a JTable with the table model
-        JScrollPane dfaScrollPane = new JScrollPane(dfaTable); // Create a scroll pane for the JTable
-        mainPanel.add(dfaScrollPane); // Add the scroll pane to the main panel
+        dfaTable = new JTable(tableModel);
+        JScrollPane dfaScrollPane = new JScrollPane(dfaTable);
+        dfaPanel.add(dfaScrollPane, BorderLayout.CENTER);
+        dfaPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
+        mainPanel.add(dfaPanel);
 
-        JLabel outputLabel = new JLabel("Output:"); // Create a label for output
-        mainPanel.add(outputLabel); // Add the label to the main panel
+        // Create a panel for the Output label and its placeholder
+        JPanel outputPanel = new JPanel(new BorderLayout());
+        JLabel outputLabel = new JLabel("Output:");
+        outputPanel.add(outputLabel, BorderLayout.NORTH);
+        outputTextArea = new JTextArea(10, 40);
+        JScrollPane outputScrollPane = new JScrollPane(outputTextArea);
+        outputPanel.add(outputScrollPane, BorderLayout.CENTER);
+        outputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
+        mainPanel.add(outputPanel);
 
-        JButton loadButton = new JButton("Load Files"); // Create a button for loading files
-        loadButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadFiles(); // Attach an action listener to the button for loading files
-            }
-        });
+        // Create a panel for the buttons
+        JPanel buttonPanel = new JPanel();
+        JButton loadButton = new JButton("Load Files");
+        loadButton.addActionListener(e -> loadFiles());
+        JButton processButton = new JButton("Process");
+        processButton.addActionListener(e -> processFiles());
+        buttonPanel.add(loadButton);
+        buttonPanel.add(processButton);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
 
-        JButton processButton = new JButton("Process"); // Create a button for processing
-        processButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                processFiles(); // Attach an action listener to the button for processing files
-            }
-        });
-
-        JPanel buttonPanel = new JPanel(); // Create a panel for buttons
-        buttonPanel.add(loadButton); // Add the load button to the button panel
-        buttonPanel.add(processButton); // Add the process button to the button panel
-
-        add(mainPanel, BorderLayout.CENTER); // Add the main panel to the center of the frame
-        add(buttonPanel, BorderLayout.SOUTH); // Add the button panel to the bottom of the frame
+        // Add the main content and button panel to the frame
+        add(mainPanel, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     // Method for loading files
@@ -147,16 +151,15 @@ public class FileLoaderGUI extends JFrame {
         // You can use inputTextArea.getText() and dfaTextArea.getText() to access the loaded content
         // and update outputTextArea with the result
         // For this example, let's just copy the input to output
-        // outputTextArea.setText(inputTextArea.getText());
+        outputTextArea.setText(inputTextArea.getText());
     }
 
-    // Main method to create and show the FileLoaderGUI
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 FileLoaderGUI fileLoader = new FileLoaderGUI();
-                fileLoader.setVisible(true); // Make the GUI visible
+                fileLoader.setVisible(true);
             }
         });
     }
