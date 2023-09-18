@@ -101,6 +101,7 @@ public class FileLoaderGUI extends JFrame {
        gbc.gridy = 1;
        gbc.weighty = 2.0; // Increase weighty value for more vertical space
        mainPanel.add(outputPanel, gbc); // Put Output panel on the right
+       outputPanel.setBackground(Color.pink); //Set color to the panel
 
      
 
