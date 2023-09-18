@@ -8,6 +8,7 @@ public class FileLoaderGUI extends JFrame {
     private JTable dfaTable;
     private DefaultTableModel tableModel;
     private JTextArea outputTextArea;
+    private String outputFileName;
     //private StringBuilder content;
     //private JPanel mainPanel;
     private JPanel statusPanel;
@@ -136,9 +137,16 @@ public class FileLoaderGUI extends JFrame {
                 }
                 reader.close(); // Close the file reader
 
+                
                 if (fileName.endsWith(".in")) { // If the file has a .in extension
                     inputTextArea.setText(content.toString()); // Set the text in the inputTextArea
                     status(true, ".in");
+
+                    String outputFileName = fileName.replace(".in", ".out");
+                outputFileName = outputFileName.substring(0, outputFileName.lastIndexOf('.')) + ".out";
+
+                // Store the modified output file name
+                this.outputFileName = outputFileName;
                 } else if (fileName.endsWith(".dfa")) { // If the file has a .dfa extension
                     processDFAFile(content.toString()); // Process and display the .dfa file
                     status(true, ".dfa");
@@ -297,8 +305,8 @@ public class FileLoaderGUI extends JFrame {
         outputStringBuilder.append(outputLine).append("\n");
     }
 
-    // Define the file path for saving the results
-    String outputPath = System.getProperty("user.dir") + File.separator + "strings.out";
+    // Define the file path for saving the results using the modified output file name
+    String outputPath = System.getProperty("user.dir") + File.separator + outputFileName;
 
     // Try to write the output to the file
     try (FileWriter writer = new FileWriter(outputPath)) {
@@ -308,10 +316,10 @@ public class FileLoaderGUI extends JFrame {
         status(true, "output");
 
         // Display a message to inform the user that the results have been saved
-        JOptionPane.showMessageDialog(this, "Results have been saved to 'strings.out'.");
+        JOptionPane.showMessageDialog(this, "Results have been saved to " + outputFileName + "'.");
     } catch (IOException e) {
         e.printStackTrace(); // Handle the exception appropriately
-        JOptionPane.showMessageDialog(this, "Error saving the results to 'strings.out'.");
+        JOptionPane.showMessageDialog(this, "Error saving the results to" + outputFileName + "'.");
     }
 
     }
