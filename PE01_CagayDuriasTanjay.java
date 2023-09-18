@@ -1,5 +1,7 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.io.*;
 
@@ -9,11 +11,12 @@ public class PE01_CagayDuriasTanjay extends JFrame {
     private DefaultTableModel tableModel;
     private JTextArea outputTextArea;
     private String outputFileName;
-    //private StringBuilder content;
-    //private JPanel mainPanel;
     private JPanel statusPanel;
-    //private GridBagConstraints gbc;
+  
 
+    //Cutsom UI
+    Font customFont = new Font("Arial", Font.BOLD, 20);
+    Insets panelInsets = new Insets(10, 10, 10, 10);
     public PE01_CagayDuriasTanjay() {
         setTitle("CMSC 129 DFA Checker");
         setSize(800, 600); // Adjusted the initial size
@@ -29,9 +32,10 @@ public class PE01_CagayDuriasTanjay extends JFrame {
     // Create a panel for the Status panel
        statusPanel = new JPanel();
        JLabel statusLabel = new JLabel("Status:");
-       //Label UI
+       //UI
        statusPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
        statusPanel.add(statusLabel);
+       statusLabel.setFont(customFont);
 
      // Create a panel for the Load and Process buttons
         // Load Button
@@ -57,6 +61,9 @@ public class PE01_CagayDuriasTanjay extends JFrame {
        JPanel inputPanel = new JPanel(new BorderLayout());
        JLabel inputLabel = new JLabel("Input:");
 
+       //Label UI
+       inputLabel.setFont(customFont);
+
        // Panel UI
        inputPanel.add(inputLabel, BorderLayout.NORTH);
        inputTextArea = new JTextArea(10, 40);
@@ -73,6 +80,9 @@ public class PE01_CagayDuriasTanjay extends JFrame {
      // Create a panel for the Transition table label and its placeholder
        JPanel dfaPanel = new JPanel(new BorderLayout());
        JLabel dfaLabel = new JLabel("Transition table:");
+
+       //Label UI
+       dfaLabel.setFont(customFont);
 
        // Panel UI
        dfaPanel.add(dfaLabel, BorderLayout.NORTH);
@@ -91,10 +101,14 @@ public class PE01_CagayDuriasTanjay extends JFrame {
        JPanel outputPanel = new JPanel(new BorderLayout());
        JLabel outputLabel = new JLabel("Output:");
        outputPanel.add(outputLabel, BorderLayout.NORTH);
+        
+       //Label UI
+       outputLabel.setFont(customFont);
+
        // Panel UI
-       
        outputTextArea = new JTextArea(10, 40);
        JScrollPane outputScrollPane = new JScrollPane(outputTextArea);
+       outputTextArea.setFont(new Font("Arial", Font.PLAIN, 14));
        outputPanel.add(outputScrollPane, BorderLayout.CENTER);
        outputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
        gbc.gridx = 2;
@@ -102,8 +116,6 @@ public class PE01_CagayDuriasTanjay extends JFrame {
        gbc.weighty = 2.0; // Increase weighty value for more vertical space
        mainPanel.add(outputPanel, gbc); // Put Output panel on the right
        outputPanel.setBackground(Color.pink); //Set color to the panel
-
-     
 
        //Panel UI
        gbc.gridx = 0;
@@ -127,8 +139,6 @@ public class PE01_CagayDuriasTanjay extends JFrame {
             File file = fileChooser.getSelectedFile(); // Get the selected file
             String fileName = file.getName(); // Get the name of the file
 
-                
-
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(file)); // Create a reader for the file
                 StringBuilder content = new StringBuilder(); // Create a string builder to store file content
@@ -140,8 +150,9 @@ public class PE01_CagayDuriasTanjay extends JFrame {
 
                 
                 if (fileName.endsWith(".in")) { // If the file has a .in extension
-                    inputTextArea.setText(content.toString()); // Set the text in the inputTextArea
                     status(true, ".in");
+                    inputTextArea.setText(content.toString()); // Set the text in the inputTextArea
+                    inputTextArea.setFont(new Font("Arial", Font.PLAIN, 14)); // Customize the font for inputTextArea
 
                     String outputFileName = fileName.replace(".in", ".out");
                 outputFileName = outputFileName.substring(0, outputFileName.lastIndexOf('.')) + ".out";
@@ -154,13 +165,12 @@ public class PE01_CagayDuriasTanjay extends JFrame {
                 } else {
                     JOptionPane.showMessageDialog(this, "Unsupported file format."); // Show an error message for unsupported file formats
                 }
+
             } catch (IOException e) {
                 e.printStackTrace(); // Print the exception stack trace
                 JOptionPane.showMessageDialog(this, "Error loading the file."); // Show an error message for file loading
             }
-        }
-
-        
+        }  
     }
 
     // Method for processing DFA files
@@ -169,6 +179,7 @@ public class PE01_CagayDuriasTanjay extends JFrame {
         String[] lines = fileContent.split("\n");
 
         if (lines.length < 2) { // If there are less than 2 lines in the file
+
             JOptionPane.showMessageDialog(this, "Invalid DFA file format."); // Show an error message for invalid format
             return; // Return from the method
         }
@@ -187,6 +198,20 @@ public class PE01_CagayDuriasTanjay extends JFrame {
         // Initialize the table model with headers and empty data
         tableModel.setColumnIdentifiers(columnHeaders);
         tableModel.setRowCount(lines.length - 1);
+
+        // Customize the font for the table headers
+        JTableHeader header = dfaTable.getTableHeader();
+        Font headerFont = new Font("Arial", Font.BOLD, 16); // Customize the font here
+        header.setFont(headerFont);
+
+        // Customize the font for the table cells
+        Font cellFont = new Font("Arial", Font.ITALIC, 14); // Customize the font here
+        dfaTable.setFont(cellFont);
+
+         // Center-align the text in the cells
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        dfaTable.setDefaultRenderer(Object.class, centerRenderer);
 
         // Populate the table rows
         for (int row = 1; row < lines.length; row++) {
@@ -239,18 +264,12 @@ public class PE01_CagayDuriasTanjay extends JFrame {
 
             // begins with start state
             currentState = startState;
-
-            // Uncomment line to track each input string
-            // System.out.println("String: " + lines[inputString]);
             
             // Splits the input string into individual characters
             String[] inputStringCharacters = lines[inputString].split("");
             
             // Goes through each of the individual characters of the current input string
             for (int character = 0; character < inputStringCharacters.length; character++){
-
-                // Uncomment line to track current state and read character
-                // System.out.println("\nCurrent State: " + (String) tableModel.getValueAt(currentState, 0) + " Character Read: " + inputStringCharacters[character]);
                 
                 // Goes through each of the possible inputs and checks for matches
                 for(int inputCheck = 0; inputCheck < inputs.length(); inputCheck++) {
@@ -270,12 +289,13 @@ public class PE01_CagayDuriasTanjay extends JFrame {
                 }
 
             }
-    
+            
             // check if end state is final state, refering to the DFA
             if (if_FinalState(currentState)) {
 
                 // if the end state is a final state, the input string is accepted by the machine and so is INVALID
                 outputTextArea.append("VALID\n");
+                
                 
             } else {
 
@@ -284,44 +304,37 @@ public class PE01_CagayDuriasTanjay extends JFrame {
                 
             }
 
-            // Uncomment to track when DFA tracking for input string is done
-            // System.out.println("End...\n");
+        }
+      
+    
+        outputTextArea.setText(outputTextArea.getText());
+        
+        // Create a StringBuilder to store the output
+        StringBuilder outputStringBuilder = new StringBuilder();
+    
+        // Iterate through the output lines and append them to the StringBuilder
+        String[] outputLines = outputTextArea.getText().split("\n");
+        for (String outputLine : outputLines) {
+            outputStringBuilder.append(outputLine).append("\n");
+        }
+
+        // Define the file path for saving the results using the modified output file name
+        String outputPath = System.getProperty("user.dir") + File.separator + outputFileName;
+
+        // Try to write the output to the file
+        try (FileWriter writer = new FileWriter(outputPath)) {
+            writer.write(outputStringBuilder.toString());
+            writer.flush();
+            writer.close();
+
+            // Display a message to inform the user that the results have been saved
+            status(true,"output");
+       
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception appropriately
+            status(false,"output");
 
         }
-      status(true,"output");
-    
-    
-    // Display the output in the outputTextArea
-     //outputTextArea.setText(outputTextArea.toString());
-     
-    
-     outputTextArea.setText(outputTextArea.getText());
-
-      // Create a StringBuilder to store the output
-    StringBuilder outputStringBuilder = new StringBuilder();
-    
-    // Iterate through the output lines and append them to the StringBuilder
-    String[] outputLines = outputTextArea.getText().split("\n");
-    for (String outputLine : outputLines) {
-        outputStringBuilder.append(outputLine).append("\n");
-    }
-
-    // Define the file path for saving the results using the modified output file name
-    String outputPath = System.getProperty("user.dir") + File.separator + outputFileName;
-
-    // Try to write the output to the file
-    try (FileWriter writer = new FileWriter(outputPath)) {
-        writer.write(outputStringBuilder.toString());
-        writer.flush();
-        writer.close();
-        status(true, "output");
-
-        // Display a message to inform the user that the results have been saved
-        JOptionPane.showMessageDialog(this, "Results have been saved to " + outputFileName + "'.");
-    } catch (IOException e) {
-        e.printStackTrace(); // Handle the exception appropriately
-        JOptionPane.showMessageDialog(this, "Error saving the results to" + outputFileName + "'.");
-    }
 
     }
 
@@ -404,37 +417,31 @@ public class PE01_CagayDuriasTanjay extends JFrame {
         statusPanel.removeAll();
         JLabel okLabel = new JLabel();
         okLabel.setName("okLabel");
+
+        //JLabel UI
+        okLabel.setFont(customFont);
     
         if (isSuccess) {
             if (fileType.equals(".in") || fileType.equals(".dfa")){
-                okLabel.setText("Status: SUCCESS importing " + fileType);
+                okLabel.setText("Status: SUCCESS loading " + fileType);
             
             }
             else if (fileType.equals("output")){
-                okLabel.setText("Status: Processing " + fileType);
+                okLabel.setText("Status: Results have been saved to " + outputFileName + "'.");
             }
             okLabel.setForeground(Color.BLACK); // Set text color to green for success
-
         } else {
-            okLabel.setText("Status: ERROR");
-            okLabel.setForeground(Color.RED); // Set text color to red for error
+            if (fileType.equals(".in") || fileType.equals(".dfa")){
+                okLabel.setText("Status: ERROR loading " + fileType);
+            
+            }
+            else if (fileType.equals("output")){
+                okLabel.setText("Status: Error saving results to " + outputFileName + "'.");
+            }
         }
 
         // Debugging information
         System.out.println("Adding label to Panel");
-    
-        // Check if an "okLabel" component exists in the statusPanel
-        Component[] components = statusPanel.getComponents();
-        for (Component component : components) {
-            if (component.getName() != null && component.getName().equals("okLabel")) {
-                okLabel.setText("");
-                statusPanel.remove(okLabel); // Remove the previous okLabel
-                okLabel.setText("SUCCESS importing " + fileType);
-               
-                System.out.println("Removed");
-            }
-            
-        }
         
         // Add the new okLabel
         statusPanel.add(okLabel);
