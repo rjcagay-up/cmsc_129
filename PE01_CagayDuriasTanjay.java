@@ -213,7 +213,7 @@ public class PE01_CagayDuriasTanjay extends JFrame {
 
                 } else { // each column for each row is filled with the corresponding state, following the DFA file
 
-                    if (!(isUppercaseLetter(cells[col]))) {
+                    if (!(isvalidStateName(cells[col], col))) {
                         tableModel.setRowCount(0); // erases invalid DFA table
                         JOptionPane.showMessageDialog(this, "Invalid DFA: Invalid State Name [only A-Z]"); // Show an error message for invalid DFA
                         return;
@@ -237,11 +237,11 @@ public class PE01_CagayDuriasTanjay extends JFrame {
     }
     
     // Checks if input string is a singular uppercase letter (A-Z)
-    private boolean isUppercaseLetter (String str) {
+    private boolean isvalidStateName (String str, int index) {
 
         // if there only exists two characters, it might be state name and indication of final or start state
         // if so, remove "-" or "+" character and pass on the remaining character to check if uppercase
-        if (str.length() == 2 && (str.contains("-") || str.contains("+"))) {
+        if (index == 1 && str.length() == 2 && (str.contains("-") || str.contains("+"))) {
             str = str.replace("-", "");
             str = str.replace("+", "");
 
