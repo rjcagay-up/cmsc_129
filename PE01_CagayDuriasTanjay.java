@@ -288,6 +288,14 @@ public class PE01_CagayDuriasTanjay extends JFrame {
 
     // Method for processing files (placeholder for actual processing logic)
     private void processFiles() {
+        // Check if .in and .dfa files exist
+        File inFile = new File("input.in");
+        File dfaFile = new File("input.dfa");
+
+        if (!inFile.exists() || !dfaFile.exists()) {
+            JOptionPane.showMessageDialog(this, "Required .in and .dfa to process! Files are missing.");
+            return; // Exit the method if files are missing
+        }
         // initializing variables
         int startState = 0;
         int currentState = 0;
