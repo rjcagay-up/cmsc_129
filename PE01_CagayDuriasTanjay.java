@@ -200,6 +200,20 @@ public class PE01_CagayDuriasTanjay extends JFrame {
         tableModel.setColumnIdentifiers(columnHeaders);
         tableModel.setRowCount(lines.length - 1);
 
+        // Customize the font for the table headers
+        JTableHeader header = dfaTable.getTableHeader();
+        Font headerFont = new Font("Arial", Font.BOLD, 16); // Customize the font here
+        header.setFont(headerFont);
+
+        // Customize the font for the table cells
+        Font cellFont = new Font("Arial", Font.ITALIC, 14); // Customize the font here
+        dfaTable.setFont(cellFont);
+
+         // Center-align the text in the cells
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        dfaTable.setDefaultRenderer(Object.class, centerRenderer);
+
         // initializing counter for start state
         int startStates = 0;
 
