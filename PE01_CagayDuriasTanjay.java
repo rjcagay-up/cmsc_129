@@ -214,8 +214,10 @@ public class PE01_CagayDuriasTanjay extends JFrame {
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         dfaTable.setDefaultRenderer(Object.class, centerRenderer);
 
-        // initializing counter for start state
+        // initializing counter for start state, state indicators, and additional to state names (for "-" and "+" indicators)
         int startStates = 0;
+        String indicateStates = "";
+        String stateName = "";
 
         // Populate the table rows
         for (int row = 1; row < lines.length; row++) {
@@ -227,25 +229,40 @@ public class PE01_CagayDuriasTanjay extends JFrame {
             for (int col = 0; col < numSymbols+2; col++) {
 
                 // due to splitting with "," character, "" are possible characters to encounter because of DFA format
-                // when "" or "-" or "+" characters are encountered, it is fused with the state string of the next index
+                // when "-", "+" and "" (turned into " ") characters are stored in string indicateStates, separated by ","
                 if (cells[col].equals("-")) {
 
                     startStates += 1; //if "-" character is detected, there is one start state present
-                    cells[col+1] = cells[col+1] + cells[col];
+                    indicateStates += "-,";
 
-                } else if (cells[col].equals("+") || cells[col].equals("")) {
+                } else if (cells[col].equals("+")) {
 
-                    cells[col+1] = cells[col+1] + cells[col];
+                    indicateStates += "+,";
+
+                } else if (cells[col].equals("")) {
+
+                    indicateStates += " ,";
 
                 } else { // each column for each row is filled with the corresponding state, following the DFA file
 
-                    if (!(isvalidStateName(cells[col], col))) {
+                    // checks if current state name is valid
+                    if (!(isvalidStateName(cells[col]))) {
                         tableModel.setRowCount(0); // erases invalid DFA table
                         JOptionPane.showMessageDialog(this, "Invalid DFA: Invalid State Name [only A-Z]"); // Show an error message for invalid DFA
                         return;
                     }
 
-                    tableModel.setValueAt(cells[col], row - 1, col-1);
+                    // if it is the first column of the row, add indicators if state is start, final, or not
+                    if (col == 1) {
+                        //indicateStates string is split by "," to individual indicators for each of the states in the first column (-,+,"")
+                        String[] indicators = indicateStates.trim().split(",");
+                        stateName = cells[col] + indicators[row - 1];
+                    } else { // else, just display name
+                        stateName = cells[col];
+                    }
+
+                    // sets value of the state name on the table
+                    tableModel.setValueAt(stateName, row - 1, col - 1);
                 
                 }
 
@@ -263,18 +280,7 @@ public class PE01_CagayDuriasTanjay extends JFrame {
     }
     
     // Checks if input string is a singular uppercase letter (A-Z)
-    private boolean isvalidStateName (String str, int index) {
-
-        // if there only exists two characters, it might be state name and indication of final or start state
-        // if so, remove "-" or "+" character and pass on the remaining character to check if uppercase
-        if (index == 1 && str.length() == 2 && (str.contains("-") || str.contains("+"))) {
-            str = str.replace("-", "");
-            str = str.replace("+", "");
-
-            if (Character.isUpperCase(str.charAt(0))) { // if remaining character is upper case letter, string is an uppercase letter
-                return true;
-            }
-        }
+    private boolean isvalidStateName (String str) {
 
         if (str.length() != 1) { // if length is not 1, it is not one letter
             return false;
@@ -288,14 +294,7 @@ public class PE01_CagayDuriasTanjay extends JFrame {
 
     // Method for processing files (placeholder for actual processing logic)
     private void processFiles() {
-        // Check if .in and .dfa files exist
-        File inFile = new File("input.in");
-        File dfaFile = new File("input.dfa");
-
-        if (!inFile.exists() || !dfaFile.exists()) {
-            JOptionPane.showMessageDialog(this, "Required .in and .dfa to process! Files are missing.");
-            return; // Exit the method if files are missing
-        }
+        
         // initializing variables
         int startState = 0;
         int currentState = 0;
@@ -303,6 +302,18 @@ public class PE01_CagayDuriasTanjay extends JFrame {
 
         // Get encoded text in Input Text Area
         String inputText = inputTextArea.getText();
+
+        // Check if the input text is empty
+        if (inputText.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No .in file found. Upload .in to process");
+            return; // Exit the method if the input area is empty
+        }
+
+        // Check if the dfa table is empty
+        if (tableModel.getRowCount() == 0 && tableModel.getColumnCount() == 0) {
+            JOptionPane.showMessageDialog(this, "No .dfa file found. Upload .dfa to process");
+            return; // Exit the method if the dfa table is empty
+        }
 
         // Get possible inputs from DFA table headers
         String inputs = "";
