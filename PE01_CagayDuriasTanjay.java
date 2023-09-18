@@ -1,5 +1,7 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.io.*;
 
@@ -9,11 +11,12 @@ public class PE01_CagayDuriasTanjay extends JFrame {
     private DefaultTableModel tableModel;
     private JTextArea outputTextArea;
     private String outputFileName;
-    //private StringBuilder content;
-    //private JPanel mainPanel;
     private JPanel statusPanel;
-    //private GridBagConstraints gbc;
+  
 
+    //Cutsom UI
+    Font customFont = new Font("Arial", Font.BOLD, 20);
+    Insets panelInsets = new Insets(10, 10, 10, 10);
     public PE01_CagayDuriasTanjay() {
         setTitle("CMSC 129 DFA Checker");
         setSize(800, 600); // Adjusted the initial size
@@ -29,9 +32,10 @@ public class PE01_CagayDuriasTanjay extends JFrame {
     // Create a panel for the Status panel
        statusPanel = new JPanel();
        JLabel statusLabel = new JLabel("Status:");
-       //Label UI
+       //UI
        statusPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
        statusPanel.add(statusLabel);
+       statusLabel.setFont(customFont);
 
      // Create a panel for the Load and Process buttons
         // Load Button
@@ -57,6 +61,9 @@ public class PE01_CagayDuriasTanjay extends JFrame {
        JPanel inputPanel = new JPanel(new BorderLayout());
        JLabel inputLabel = new JLabel("Input:");
 
+       //Label UI
+       inputLabel.setFont(customFont);
+
        // Panel UI
        inputPanel.add(inputLabel, BorderLayout.NORTH);
        inputTextArea = new JTextArea(10, 40);
@@ -73,6 +80,9 @@ public class PE01_CagayDuriasTanjay extends JFrame {
      // Create a panel for the Transition table label and its placeholder
        JPanel dfaPanel = new JPanel(new BorderLayout());
        JLabel dfaLabel = new JLabel("Transition table:");
+
+       //Label UI
+       dfaLabel.setFont(customFont);
 
        // Panel UI
        dfaPanel.add(dfaLabel, BorderLayout.NORTH);
@@ -91,10 +101,14 @@ public class PE01_CagayDuriasTanjay extends JFrame {
        JPanel outputPanel = new JPanel(new BorderLayout());
        JLabel outputLabel = new JLabel("Output:");
        outputPanel.add(outputLabel, BorderLayout.NORTH);
+        
+       //Label UI
+       outputLabel.setFont(customFont);
+
        // Panel UI
-       
        outputTextArea = new JTextArea(10, 40);
        JScrollPane outputScrollPane = new JScrollPane(outputTextArea);
+       outputTextArea.setFont(new Font("Arial", Font.PLAIN, 14));
        outputPanel.add(outputScrollPane, BorderLayout.CENTER);
        outputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
        gbc.gridx = 2;
@@ -102,8 +116,6 @@ public class PE01_CagayDuriasTanjay extends JFrame {
        gbc.weighty = 2.0; // Increase weighty value for more vertical space
        mainPanel.add(outputPanel, gbc); // Put Output panel on the right
        outputPanel.setBackground(Color.pink); //Set color to the panel
-
-     
 
        //Panel UI
        gbc.gridx = 0;
@@ -454,37 +466,31 @@ public class PE01_CagayDuriasTanjay extends JFrame {
         statusPanel.removeAll();
         JLabel okLabel = new JLabel();
         okLabel.setName("okLabel");
+
+        //JLabel UI
+        okLabel.setFont(customFont);
     
         if (isSuccess) {
             if (fileType.equals(".in") || fileType.equals(".dfa")){
-                okLabel.setText("Status: SUCCESS importing " + fileType);
+                okLabel.setText("Status: SUCCESS loading " + fileType);
             
             }
             else if (fileType.equals("output")){
-                okLabel.setText("Status: Processing " + fileType);
+                okLabel.setText("Status: Results have been saved to " + outputFileName + "'.");
             }
             okLabel.setForeground(Color.BLACK); // Set text color to green for success
-
         } else {
-            okLabel.setText("Status: ERROR");
-            okLabel.setForeground(Color.RED); // Set text color to red for error
+            if (fileType.equals(".in") || fileType.equals(".dfa")){
+                okLabel.setText("Status: ERROR loading " + fileType);
+            
+            }
+            else if (fileType.equals("output")){
+                okLabel.setText("Status: Error saving results to " + outputFileName + "'.");
+            }
         }
 
         // Debugging information
         System.out.println("Adding label to Panel");
-    
-        // Check if an "okLabel" component exists in the statusPanel
-        Component[] components = statusPanel.getComponents();
-        for (Component component : components) {
-            if (component.getName() != null && component.getName().equals("okLabel")) {
-                okLabel.setText("");
-                statusPanel.remove(okLabel); // Remove the previous okLabel
-                okLabel.setText("SUCCESS importing " + fileType);
-               
-                System.out.println("Removed");
-            }
-            
-        }
         
         // Add the new okLabel
         statusPanel.add(okLabel);
