@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
+from tkinter import messagebox
+from tkinter import *  
 
 class LexicalAnalyzer:
     def __init__(self):
@@ -75,24 +77,52 @@ class LexicalAnalyzer:
             error_message += "\nUnknown word '" + str(error[0]) + "' detected at line " + str(error[1])
             
         return error_message
-            
-def show_tokenized_code(event=None):
+        
+tokenized_window = None  # Global variable to track the tokenized window
+tokenized_code = None
+compiled = False  # Variable to track compilation status
+
+# Function for Compiling the code
+def compile_code(event=None):
+    global tokenized_code, compiled
+    
     code = editor.get("1.0", tk.END)
 
     lexical_analyzer = LexicalAnalyzer()
     lexical_analyzer.analyze(code)
 
-    output.delete(1.0, tk.END)
-
     tokenized_code = ' '.join(token for token, _, _ in lexical_analyzer.tokens)
-    output.insert(tk.END, tokenized_code)
 
-    if(tokenized_code.find('ERR_LEX') == -1):
+    if tokenized_code.find('ERR_LEX') == -1:
         update_status("Code tokenized successfully")
+        compiled = True  # Mark as compiled
     else:
         update_status(lexical_analyzer.show_errlex())
+        compiled = False
 
     display_variables(lexical_analyzer.variables)
+
+# Function for showing the tokenized code
+def show_tokenized_code(event=None):
+    global tokenized_window, tokenized_code
+    if not compiled:  # Check if code is compiled
+        update_status("Compile the code first before showing tokenized code.")
+    elif tokenized_window and tokenized_window.winfo_exists():
+        update_status("Close the existing tokenized window before compiling again.")
+    else:
+        tokenized_window = tk.Toplevel(root)
+        tokenized_window.title("Tokenized Code")
+        tokenized_output = ScrolledText(tokenized_window, wrap=tk.WORD)
+        tokenized_output.pack(fill=tk.BOTH, expand=True)
+        tokenized_output.insert(tk.END, tokenized_code)
+
+# Function for Executing the code
+def execute_code(event=None):
+    if not compiled:
+        update_status("Compile the code first before executing.")
+    else:
+        print("Execute Code")
+
 
 def display_variables(variables):
     table.delete(1.0, tk.END)
@@ -129,26 +159,32 @@ root.configure(bg="yellow")
 toolbar = tk.Frame(root, bg="pink")
 toolbar.pack(fill=tk.X)
 
-# Buttons for file operations
-new_button = tk.Button(toolbar, text="New File (Ctrl+N)", command=new_file, font=("Helvetica", 12))
-new_button.pack(side=tk.LEFT, padx=5, pady=5)
-new_button.bind("<Control-n>", new_file)
-
-open_button = tk.Button(toolbar, text="Open File (Ctrl+O)", command=open_file, font=("Helvetica", 12))
-open_button.pack(side=tk.LEFT, padx=5, pady=5)
-open_button.bind("<Control-o>", open_file)
-
-save_button = tk.Button(toolbar, text="Save (Ctrl+S)", command=save_file, font=("Helvetica", 12))
-save_button.pack(side=tk.LEFT, padx=5, pady=5)
-save_button.bind("<Control-s>", save_file)
-
-tokenize_button = tk.Button(toolbar, text="Compile Code (Ctrl+T)", command=show_tokenized_code, font=("Helvetica", 12))
-tokenize_button.pack(side=tk.LEFT, padx=5, pady=5)
-tokenize_button.bind("<Control-t>", show_tokenized_code)
-
 # Main UI components
 main_frame = tk.Frame(root, bg="yellow")
 main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+# create a toplevel menu  
+menubar = Menu(root)  
+
+file = Menu(menubar, tearoff=0)  
+file.add_command(label="New", command=new_file)  
+file.add_command(label="Open", command=open_file)  
+file.add_command(label="Save", command=save_file)  
+file.add_command(label="Save as...")  
+file.add_command(label="Close")   
+file.add_separator()  
+menubar.add_cascade(label="File", menu=file)  
+
+compile = Menu(menubar, tearoff=0)
+compile.add_command(label="Compile Code", command=compile_code)
+compile.add_command(label="Show Tokenized Code", command=show_tokenized_code)
+compile.add_separator()
+menubar.add_cascade(label="Compile", menu=compile)  
+
+menubar.add_command(label="Execute", command=execute_code)  
+  
+# display the menu  
+root.config(menu=menubar)  
 
 # Editor section
 editor_frame = tk.Frame(main_frame, bg="yellow")
@@ -159,19 +195,6 @@ editor_label.pack()
 
 editor = ScrolledText(editor_frame, wrap=tk.WORD)
 editor.pack(fill=tk.BOTH, expand=True)
-
-# Output section
-space_frame = tk.Frame(main_frame, width=20)
-space_frame.pack(side=tk.LEFT)
-
-output_frame = tk.Frame(main_frame, bg="yellow")
-output_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-output_label = tk.Label(output_frame, text="Tokenized Code", font=("Helvetica", 14), bg="yellow")
-output_label.pack()
-
-output = ScrolledText(output_frame, wrap=tk.WORD)
-output.pack(fill=tk.BOTH, expand=True)
 
 # Variables table section
 table_frame = tk.Frame(main_frame, bg="yellow")
