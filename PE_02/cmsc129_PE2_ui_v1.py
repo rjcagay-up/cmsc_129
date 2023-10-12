@@ -4,9 +4,20 @@ from tkinter.scrolledtext import ScrolledText
 
 class LexicalAnalyzer:
     def __init__(self):
-        self.keywords = set()
+        self.keywords = ('IOL', 'LOI', 'INTO', 'IS', 'BEG', 'PRINT', 'ADD', 'SUB', 'MULT', 'DIV', 'MOD', 'NEWLN')
+        self.datatypes = ('INT', 'STR')
         self.tokens = []
         self.variables = set()
+        
+    def itISkeyword(self, word):
+        if word in self.keywords:
+            return True
+        return False
+    
+    def itISdatatype(self, word):
+        if word in self.datatypes:
+            return True
+        return False
 
     def analyze(self, code):
         self.tokens = []
@@ -19,18 +30,36 @@ class LexicalAnalyzer:
             for word in words:
                 token = self.get_token(word)
                 self.tokens.append((token, word, i))
-                if token == 'IDENT' and word not in self.keywords:
-                    self.variables.add((word, 'UNKNOWN'))
+                if token == 'IDENT' and len(self.tokens) != 1:
+                    prev = self.tokens[len(self.tokens)-2]
+                    if (self.itISdatatype(prev[0])):
+                        self.variables.add((word, prev[0]))
+                    else:
+                        self.variables.add((word, 'null'))
+                elif token == 'IDENT':
+                    self.variables.add((word, 'null'))
 
     def get_token(self, word):
-        if word.isdigit():
+        if (self.itISkeyword(word)):
+            return word
+        elif(self.itISdatatype(word)):
+            return word
+        elif word.isdigit():
             return 'INT_LIT'
         elif word.isidentifier():
             return 'IDENT'
         else:
-            self.keywords.add(word)
-            return word
-
+            return 'ERR_LEX'
+        
+    def show_errlex(self):
+        errlex = [(word,line) for token, word, line in self.tokens if token == 'ERR_LEX']
+        error_message = "Unknown words detected:"
+        
+        for error in errlex:
+            error_message += "\nUnknown word '" + str(error[0]) + "' detected at line " + str(error[1])
+            
+        return error_message
+            
 def show_tokenized_code(event=None):
     code = editor.get("1.0", tk.END)
 
@@ -42,7 +71,10 @@ def show_tokenized_code(event=None):
     tokenized_code = ' '.join(token for token, _, _ in lexical_analyzer.tokens)
     output.insert(tk.END, tokenized_code)
 
-    update_status("Code tokenized successfully")
+    if(tokenized_code.find('ERR_LEX') == -1):
+        update_status("Code tokenized successfully")
+    else:
+        update_status(lexical_analyzer.show_errlex())
 
     display_variables(lexical_analyzer.variables)
 
