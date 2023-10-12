@@ -251,6 +251,21 @@ def save_file_as(event=None):
         update_status(f"File Saved: {file_path}")
         root.title(f"PL Compiler - {file_path}")
 
+def close_file(event=None):
+    global new_file_created, editor_path
+
+    if new_file_created:
+        response = messagebox.askyesnocancel("Close File", "Do you want to close the current file? Any unsaved changes will be lost.")
+        if response is None or response is False:
+            return
+
+    if editor_path:
+        editor.delete(1.0, tk.END)
+        editor_path = None
+        update_status("File Closed")
+        new_file_created = True
+        root.title("PL Compiler")
+
 # GUI setup
 root = tk.Tk()
 root.title("PL Compiler")
@@ -270,6 +285,7 @@ file.add_command(label="New (ctrl+n)", command=new_file, accelerator="ctrl+n")
 file.add_command(label="Open (ctrl+o)", command=open_file, accelerator="ctrl+o")
 file.add_command(label="Save (ctrl+s)", command=save_file, accelerator="ctrl+s")
 file.add_command(label="Save as... (ctrl+a)",command=save_file_as, accelerator="ctrl+a")
+file.add_command(label="Close (ctrl+q)", command=close_file, accelerator="ctrl+q")
 file.add_separator()
 menubar.add_cascade(label="File", menu=file)
 
@@ -285,6 +301,7 @@ root.bind('<Control-n>', new_file)
 root.bind('<Control-o>', open_file)
 root.bind('<Control-s>', save_file)
 root.bind('<Control-a>', save_file_as)
+root.bind('<Control-q>', close_file)
 root.bind('<F9>', compile_code)
 root.bind('<F10>', show_tokenized_code)
 root.bind('<F12>', execute_code)
