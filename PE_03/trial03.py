@@ -2,18 +2,16 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 import os
 
-
 # Create the main Tkinter window
 root = tk.Tk()
 root.title("File Loader and Parser")
 
 # Get the screen width and height
-screen_width = root.winfo_screenwidth()-10
-screen_height = root.winfo_screenheight()-100
+screen_width = root.winfo_screenwidth() - 10
+screen_height = root.winfo_screenheight() - 100
 
 # Set the window size to adapt to the screen
 root.geometry(f"{screen_width}x{screen_height}+0+0")
-
 
 # Arrays to store data from productions and parse table
 prod_data = []
@@ -89,61 +87,28 @@ def parse_input():
     root.after(2000, lambda: parsing_status_var.set(""))  # Clear the status after 2000 milliseconds (2 seconds)
 
 # Function to configure the border style for the production and parse table
-def configure_tags():
-    # Configure style for the production tree
-    production_tree.tag_configure("border", background="white")
-    production_tree["show"] = "headings"
-    production_tree.heading("#0", text="", anchor="w")
-    production_tree.column("#0", stretch=tk.NO, width=1)
-    production_tree.tag_configure("border", background="white")
-
-    # Configure style for the parse table tree
-    parse_table_tree.tag_configure("border", background="white")
-    parse_table_tree["show"] = "headings"
-    parse_table_tree.heading("#0", text="", anchor="w")
-    parse_table_tree.column("#0", stretch=tk.NO, width=1)
-    parse_table_tree.tag_configure("border", background="white")
-
-
+def configure_tags(tree_widget):
+    # Configure style for the tree
+    tree_widget.tag_configure("border", background="white")
+    tree_widget["show"] = "headings"
+    tree_widget.heading("#0", text="", anchor="w")
+    tree_widget.column("#0", stretch=tk.NO, width=1)
+    tree_widget.tag_configure("border", background="white")
 
 # Create a Treeview widget for displaying the production table
 production_tree = ttk.Treeview(root, height=10)
 production_tree.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-production_tree.config(xscrollcommand=lambda f, l: prodscrollbar.set(f, l))
 production_label = tk.Label(root, text="Production:", font=("Arial", 14))
 production_label.grid(row=0, column=0, padx=10, pady=5)
 
 # Create a Treeview widget for displaying the parse table
 parse_table_tree = ttk.Treeview(root, height=10)
 parse_table_tree.grid(row=1, column=1, padx=10, pady=10, columnspan=1, sticky="nsew")
-parse_table_tree.config(xscrollcommand=lambda f, l: parsescrollbar.set(f, l))
 parse_table_label = tk.Label(root, text="Parse Table:", font=("Arial", 14))
 parse_table_label.grid(row=0, column=1, padx=10, pady=5)
 
-# Create a Frame for the production table and its scrollbar
-production_frame = tk.Frame(root, width=(screen_width-100)/2,borderwidth=10)
-production_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-
-
-prodscrollbar = ttk.Scrollbar(production_frame, orient="horizontal")
-prodscrollbar.grid(row=1, column=0, sticky="ew")
-
-production_tree = ttk.Treeview(production_frame, height=10, show="headings", xscrollcommand = prodscrollbar.set)
-production_tree.grid(row=0, column=0, sticky="nsew")
-prodscrollbar.config(command=production_tree.xview)
-
-# Create a Frame for the parse table and its scrollbar
-parse_frame = tk.Frame(root)
-parse_frame.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
-
-parse_table_tree = ttk.Treeview(parse_frame, height=10, show="headings")
-parse_table_tree.grid(row=0, column=0, sticky="nsew")
-parsescrollbar = ttk.Scrollbar(parse_frame, orient="horizontal", command=parse_table_tree.xview)
-parsescrollbar.grid(row=1, column=0, sticky="ew")
-parse_table_tree['xscrollcommand'] = parsescrollbar.set
-
 # Create a button for loading files
-load_button = tk.Button(root, text="LOAD", command=lambda: [load_files(), configure_tags()], font=("Arial", 14))
+load_button = tk.Button(root, text="LOAD", command=lambda: [load_files(), configure_tags(production_tree), configure_tags(parse_table_tree)], font=("Arial", 14))
 load_button.grid(row=2, column=2, pady=10, columnspan=2)
 
 # Create a status label for displaying file loading information
@@ -154,7 +119,6 @@ status_label.grid(row=2, column=1, pady=5)
 # Bottom row components
 input_label = tk.Label(root, text="INPUT:", font=("Arial", 14), bg="pink", fg="black")
 input_label.grid(row=3, column=0, padx=10, pady=5, sticky=tk.E)  # Adjusted column position and sticky property
-
 
 # Create an entry for user input
 input_entry = tk.Entry(root, width=30, font=("Arial Unicode MS", 12))
@@ -170,13 +134,8 @@ parsing_status_label = tk.Label(root, textvariable=parsing_status_var, font=("Ar
 parsing_status_label.grid(row=4, column=0, padx=10, pady=5, columnspan=3)  # Adjusted columnspan
 
 # Create a Text widget for displaying parsed content
-parsed_text = tk.Text(root, wrap="none", height=10, width=150, bg="lightblue", font=("Arial Unicode MS", 12))  # Adjusted width and font size
+parsed_text = tk.Text(root, wrap="none", height=10, width=150, bg="lightblue", font=("Arial Unicode MS", 12))
 parsed_text.grid(row=5, column=0, padx=10, pady=10, columnspan=3, sticky="nsew")  # Sticky set to "nsew" for expanding
-
-
-
-# Call configure_tags to apply the border style
-configure_tags()
 
 # Allow rows and columns to expand based on widget content
 for i in range(3):
