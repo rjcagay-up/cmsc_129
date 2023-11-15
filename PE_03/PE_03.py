@@ -1,6 +1,9 @@
 import tkinter as tk
+from tkinter import *
 from tkinter import filedialog
 import os
+
+
 
 def load_files():
     files = filedialog.askopenfilenames(title="Select files", filetypes=[("Production files", "*.prod"), ("Parse Table files", "*.ptbl")])
