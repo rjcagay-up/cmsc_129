@@ -3,7 +3,10 @@ from tkinter import *
 from tkinter import filedialog
 import os
 
-
+# Initializing lists for state, production and parse lists
+production_list = []
+parse_table_list = []
+state_list = []
 
 def load_files():
     files = filedialog.askopenfilenames(title="Select files", filetypes=[("Production files", "*.prod"), ("Parse Table files", "*.ptbl")])
@@ -27,6 +30,9 @@ def generate_prod_table(file_content):
     # Clear existing content
     production_text.delete(1.0, tk.END)
     
+    # Clear existing production list
+    production_list.clear()
+    
     # Add headers to the production table
     production_text.insert(tk.END, "ID\t\tNT\t\tP\n")
 
@@ -35,28 +41,40 @@ def generate_prod_table(file_content):
         # Split line based on commas
         line_parts = line.split(',')
         
+        production_list.append(line_parts)
+        
         # Add cells to the table with borders on all sides
         for part in line_parts:
             production_text.insert(tk.END, f"{part}\t|\t", "border")
         
         # Move to the next line
         production_text.insert(tk.END, "\n")
+        
+    print('Production List:', production_list, '\n')
 
 # Function to generate a parse table from file content
 def generate_ptbl_table(file_content):
     # Clear existing content
     parse_table_text.delete(1.0, tk.END)
+    
+    # Clear existing state and parse table list
+    parse_table_list.clear()
+    state_list.clear()
 
     # Parse each line and add headers to the table based on the first line
     headers = file_content.splitlines()[0].split(',')
     for header in headers:
         parse_table_text.insert(tk.END, f"{header}\t|\t", "border")
     parse_table_text.insert(tk.END, "\n")
+    
+    parse_table_list.append(headers)
 
     # Parse each line and add rows to the table
     for line in file_content.splitlines()[1:]:
         # Split line based on commas
         line_parts = line.split(',')
+        
+        parse_table_list.append(line_parts)
         
         # Add cells to the table with borders on all sides
         for part in line_parts:
@@ -64,6 +82,14 @@ def generate_ptbl_table(file_content):
         
         # Move to the next line
         parse_table_text.insert(tk.END, "\n")
+    
+    print('Parse Table List:', parse_table_list, '\n')
+    
+    # Takes a list of all states
+    for state in parse_table_list[1:]:
+        state_list.append(state[0])
+        
+    print('State List: ', state_list, '\n')
 
 # Function to configure the border style for the production and parse table
 def configure_tags():
@@ -72,12 +98,103 @@ def configure_tags():
 
 # Function to handle parsing input (placeholder implementation)
 def parse_input():
+   # Checks if production and parse tree table exist for parsing input string
+    if not production_list:
+        print("Production File Missing")
+        return
+    if not parse_table_list:
+        print("Parse Tree File Missing")
+        return
+    
     input_text = input_entry.get()
     # Placeholder: Add your parsing logic here
     # For now, display the input in the status label
     parsing_status_var.set(f"PARSING: {input_text}")
     # Simulating parsing delay (you can replace this with your actual parsing logic)
     root.after(2000, lambda: parsing_status_var.set(""))  # Clear the status after 2000 milliseconds (2 seconds)
+    
+    # Splits the input text by white space into a list and appends '$' at the end to create the input buffer
+    input_buffer = input_text.split()
+    input_buffer.append('$')
+    
+    # Initializing stack with the initial state and '$'
+    stack = [production_list[0][1],'$'] 
+    
+    # Initialize current production id to initial state
+    current_production_id = 1
+    
+    # print initial stack and input buffer
+    print('Initial Stack:', stack)
+    print('Initial Input Buffer', input_buffer, '\n')
+    
+    # Goes through each of the tokens in the input buffer until nothing is left or an error occurs
+    while len(input_buffer) != 0:
+        
+        # clears and initializes action string
+        action_string = 'No action'
+        
+        # Checks if current token in the input buffer exists as possible input  
+        if not input_buffer[0] in parse_table_list[0][1:]:
+            print("\n'", input_buffer[0], "' does not exist in the parse table")
+            return
+        # if token exists, then get index for reference
+        else:
+            token_index = parse_table_list[0][1:].index(input_buffer[0])
+        
+        # if first element on the stack is a state, then refer to parse table if state id exists for the given token
+        if stack[0] in state_list:
+            # takes content in given cell in the parse table
+            parse_cell = parse_table_list[state_list.index(stack[0]) + 1][token_index+1]
+            
+            # If cell is not empty, replace current production id with state id in the cell
+            if parse_cell != '':
+                current_production_id = parse_cell
+                
+                # set action string to substituting state with appropriate production
+                action_string = 'Output ' + stack[0] + ' > ' + production_list[int(current_production_id) - 1][2]
+                
+                # replace state with appropriate production according to the state id in the parse table
+                stack.pop(0)
+                production_by_id = production_list[int(current_production_id) - 1][2].split(' ')
+                
+                # insert production atop the stack
+                count = 0
+                for production_element in production_by_id:
+                    # if element is 'e' do not add anything
+                    if production_element == 'e':
+                        continue
+                    else:
+                        stack.insert(count, production_element)
+                        count += 1
+            # if cell is empty, then input string is INVALID
+            else:
+                # Di ko sure actually kung tama ning pag state nako
+                print("Production is not able to produce given input token")
+                print("Input String is INVALID")
+                return
+
+        # if first element of the stack is not a state, match with the first element of the input buffer
+        else:
+            # if they match, pop both elements from the stack and input buffer and continue
+            if stack[0] == input_buffer[0]:
+                # set action string to matching given token
+                action_string = 'Match ' + stack[0]
+                
+                input_buffer.pop(0)
+                stack.pop(0)
+            # if they do not match, then input string is INVALID
+            else:
+                print('\n', stack[0], " and ", input_buffer[0], ' do not match!')
+                print("Input String is INVALID")
+                return
+
+        # print current stack, input buffer, and action string
+        print('Stack:', stack)
+        print('Input Buffer', input_buffer)
+        print('Action: ', action_string, '\n')
+
+    # if code reaches this point, input string is VALID
+    print("Given Input String is VALID")
 
 # Create the main Tkinter window
 root = tk.Tk()
