@@ -8,6 +8,9 @@ production_list = []
 parse_table_list = []
 state_list = []
 
+# Initializing output string
+output_prsd = ''
+
 def load_files():
     files = filedialog.askopenfilenames(title="Select files", filetypes=[("Production files", "*.prod"), ("Parse Table files", "*.ptbl")])
 
@@ -98,13 +101,17 @@ def configure_tags():
 
 # Function to handle parsing input (placeholder implementation)
 def parse_input():
-   # Checks if production and parse tree table exist for parsing input string
+    
+    # Checks if production and parse tree table exist for parsing input string
     if not production_list:
         print("Production File Missing")
         return
     if not parse_table_list:
         print("Parse Tree File Missing")
         return
+
+    # reset output string
+    output_prsd = ''
     
     input_text = input_entry.get()
     # Placeholder: Add your parsing logic here
@@ -126,6 +133,9 @@ def parse_input():
     # print initial stack and input buffer
     print('Initial Stack:', stack)
     print('Initial Input Buffer', input_buffer, '\n')
+    
+    # stores initial stack and input buffer in prsd file
+    output_prsd += ' '.join(stack) + ',' + ' '.join(input_buffer)
     
     # Goes through each of the tokens in the input buffer until nothing is left or an error occurs
     while len(input_buffer) != 0:
@@ -192,9 +202,16 @@ def parse_input():
         print('Stack:', stack)
         print('Input Buffer', input_buffer)
         print('Action: ', action_string, '\n')
+        
+        # stores parsing iteration (current stack, input buffer, and action string) in prsd file
+        output_prsd += '\n' + ' '.join(stack) + ',' + ' '.join(input_buffer) + ',' + action_string
 
     # if code reaches this point, input string is VALID
     print("Given Input String is VALID")
+    
+    # output prsd file
+    print("Output .prsd file below")
+    print(output_prsd)
 
 # Create the main Tkinter window
 root = tk.Tk()
