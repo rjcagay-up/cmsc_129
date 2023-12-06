@@ -1,2 +1,14 @@
-E $,+ $, 
-E$,+ $,No action
+E $,id + id $, 
+TE'$,id + id $,Output E > T E'
+FT'E'$,id + id $,Output T > F T'
+idT'E'$,id + id $,Output F > id
+T'E'$,+ id $,Match id
+E'$,+ id $,Output T' > e
++TE'$,+ id $,Output E' > + T E'
+TE'$,id $,Match +
+FT'E'$,id $,Output T > F T'
+idT'E'$,id $,Output F > id
+T'E'$,$,Match id
+E'$,$,Output T' > e
+$,$,Output E' > e
+,,Match $
