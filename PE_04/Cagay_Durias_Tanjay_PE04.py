@@ -158,8 +158,7 @@ class SyntaxAnalyzer:
 
     def analyze(self, tokens, lexical_analyzer):
         
-        # vars related to type checking
-        declared_vars = list()
+        error_statements = ""
         statement = list()
         semantic_case = None
         last_ident_token = None
@@ -182,7 +181,7 @@ class SyntaxAnalyzer:
         
             # Checks if current token in the input buffer exists as possible input  
             if not input_buffer[0][0] in self.iol_ptbl["terminals"]:
-                print("\n'", input_buffer[0][0], "' does not exist in the parse table") # Make error statement
+                error_statements += f"\n'{input_buffer[0][0]}' does not exist in the parse table\n" # Make error statement
                 return
             # if token exists, then get index for reference
             else:
@@ -213,7 +212,7 @@ class SyntaxAnalyzer:
                             count += 1
                 # if cell is empty, then input string is INVALID
                 else:
-                    print("Error in line ", input_buffer[0][2],": Expected syntax is:\n", ' '.join(self.iol_prod[current_production_id-1][1].split()),'')
+                    error_statements += f"Error in line '{input_buffer[0][2]}': Expected syntax is:\n'{' '.join(self.iol_prod[current_production_id-1][1].split())}'\n"
                     return
   
             # if first element of the stack is not a state, match with the first element of the input buffer                
@@ -236,7 +235,7 @@ class SyntaxAnalyzer:
                             statement.append(popped_token[1])
                             if lexical_analyzer.itISvariable(last_ident_token[1]):
                                 if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(popped_token[1]) != "INT":
-                                    print("Type error ", " ".join(statement)," in line ", popped_token[2]," ",{last_ident_token[1]}, "is of type ", lexical_analyzer.variableTYPEcheck(last_ident_token[1]))
+                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
                             semantic_case = "MATH"
                         case "IS":
@@ -246,34 +245,33 @@ class SyntaxAnalyzer:
                             statement.append(popped_token[1])
                             if semantic_case == "DECLARE":
                                 if lexical_analyzer.itISvariable(popped_token[1]):
-                                    print("Duplicate variable declaration ", {popped_token[1]}," in line ", popped_token[2])
+                                    error_statements += f"Duplicate variable declaration '{popped_token[1]}' in line '{popped_token[2]}'\n"
                                 semantic_case = None
                             elif not lexical_analyzer.itISvariable(popped_token[1]):
-                                print("Undefined variable ", popped_token[1], " in line ", popped_token[2])
+                                error_statements += f"Undefined variable '{popped_token[1]}' in line '{popped_token[2]}'\n"
                             elif semantic_case == "IS":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]) != lexical_analyzer.variableTYPEcheck(last_ident_token[0]):
-                                    print("Type error ", " ".join(statement), " in line ", popped_token[2], " ", last_ident_token[1], " is of type ", lexical_analyzer.variableTYPEcheck(last_ident_token[1]))
+                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
                             elif semantic_case == "MATH":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]):
-                                    print("Type error ", " ".join(statement), " in line ", popped_token[2], " ", last_ident_token[1], " is of type ", lexical_analyzer.variableTYPEcheck(last_ident_token[1]))
+                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
                             last_ident_token = popped_token
                         case "INT_LIT":
                             statement.append(popped_token[1])
                             if lexical_analyzer.itISvariable(last_ident_token[1]):
                                 if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
-                                     print("Type error ", " ".join(statement), " in line ", popped_token[2], " ", last_ident_token[1], " is of type ", lexical_analyzer.variableTYPEcheck(last_ident_token[1]))
+                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
                         case _:
                             statement.clear()
-                            print(popped_token)
                             statement.append(popped_token[1])
                             semantic_case = None                           
                             
                 # if they do not match, then input string is INVALID
                 else:
-                    print("Error in line ", input_buffer[0][2],": Expected syntax is:\n", ' '.join(self.iol_prod[current_production_id-1][1].split()))
+                    error_statements += f"Error in line '{input_buffer[0][2]}': Expected syntax is:\n'{' '.join(self.iol_prod[current_production_id-1][1].split())}'\n"
                     return
                 
             # print current stack, input buffer
@@ -282,6 +280,8 @@ class SyntaxAnalyzer:
 
         # If code has reached this far, then code is syntax valid
         print("The provided code is syntax valid!")
+        
+        print(error_statements)
         
 tokenized_window = None  # Global variable to track the tokenized window
 tokenized_code = None
