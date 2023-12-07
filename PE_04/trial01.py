@@ -268,44 +268,29 @@ def close_file(event=None):
         new_file_created = True
         root.title("PL Compiler")
 
-# Add the function to update line numbers on editor scroll
-def on_editor_scroll(*args):
-    editor_yview = editor.yview()
-    line_num.yview_moveto(editor_yview[0])
-    update_line_numbers()
-
 def update_line_numbers(event=None):
-    # global linenum0
-
-    # line_num.delete("1.0", tk.END)  # Clear previous line numbers
-    # line_num.insert(tk.END, "1\n")
-
-    # # Get the number of lines in the editor
-    # num_lines = int(editor.index(tk.END).split('.')[0])
-
-    # for i in range(2, num_lines + 1):
-    #     line_num.insert(tk.END, f"{i}\n")
-
-    # # Update linenum0 to the new number of lines
-    # linenum0 = num_lines
-
-    # # Adjust the yview to synchronize scrolling
-    # on_editor_scroll()
     global linenum0
-    first_visible_line = editor.index("@0,0")
-    linenum0 = int(first_visible_line.split('.')[0])
 
     line_num.delete("1.0", tk.END)  # Clear previous line numbers
-    line_num.insert(tk.END, f"{linenum0}\n")
+    line_num.insert(tk.END, "1\n")
 
-    # Get the number of lines currently visible in the editor
-    visible_lines = editor.winfo_height() // editor.dlineinfo("@0,0")[1]
+    # Get the number of lines in the editor
+    num_lines = int(editor.index(tk.END).split('.')[0])
 
-    for i in range(linenum0 + 1, linenum0 + visible_lines):
+    for i in range(2, num_lines + 1):
         line_num.insert(tk.END, f"{i}\n")
 
+    # Update linenum0 to the new number of lines
+    linenum0 = num_lines
+
+    # Adjust the yview to synchronize scrolling
+    on_editor_scroll()
 
 
+# Add the function to update line numbers on editor scroll
+def on_editor_scroll(*args):
+    # Set the yview of the line numbers to match the text editor's yview
+    line_num.yview_moveto(editor.yview()[0])
 # GUI setup
 root = tk.Tk()
 root.title("PL Compiler")
@@ -369,7 +354,7 @@ editor.config(state=tk.DISABLED)  # Disable the editor initially
 editor.vbar.bind("<B1-Motion>", on_editor_scroll)
 
 # Bind the yscroll command of the editor's scrollbar to update line numbers
-editor.vbar.config(command=lambda *args: on_editor_scroll())
+editor.vbar.config(command=on_editor_scroll)
 
 # Line Numbers section
 line_frame = tk.Canvas(main_frame, width=2, bg="lightgrey")
@@ -420,5 +405,3 @@ main_frame.rowconfigure(1, weight=1)
 
 
 root.mainloop()
-
-
