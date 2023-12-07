@@ -111,6 +111,7 @@ class SyntaxAnalyzer:
             ["expr", "INT_LIT"],
         ]
         
+        # List of terminals and parsing table of the IOL PL
         self.iol_ptbl = {
             "terminals": [
                 "IOL",
@@ -129,6 +130,7 @@ class SyntaxAnalyzer:
                 "MOD",
                 "IDENT",
                 "INT_LIT",
+                "$"
             ],
             
             "s": [1, "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
@@ -143,8 +145,85 @@ class SyntaxAnalyzer:
         
     def analyze(self, tokens):
         
-        for token_reg in tokens:
-            print(token_reg[0])
+        input_text = ''
+        
+        for token, _, _ in tokens:
+            input_text += token + " "
+        
+        # Splits the input text by white space into a list and appends '$' at the end to create the input buffer
+        input_buffer = input_text.split()
+        input_buffer.append('$')
+        
+        # Initializing stack with the initial state and '$'
+        stack = [self.iol_prod[0][0],'$'] 
+        
+        # Initialize current production id to initial state
+        current_production_id = 1
+        
+        # print initial stack and input buffer
+        print('Initial Stack:', stack)
+        print('Initial Input Buffer:', input_buffer, '\n')
+        
+        # Goes through each of the tokens in the input buffer until nothing is left or an error occurs
+        while len(input_buffer) != 0:
+        
+            # Checks if current token in the input buffer exists as possible input  
+            if not input_buffer[0] in self.iol_ptbl["terminals"]:
+                print("\n'", input_buffer[0], "' does not exist in the parse table") # Make error statement
+                return
+            # if token exists, then get index for reference
+            else:
+                token_index = self.iol_ptbl["terminals"].index(input_buffer[0])
+            
+            # if first element on the stack is a state, then refer to parse table if state id exists for the given token
+            if stack[0] in self.iol_ptbl and stack[0] != 'terminals':
+                
+                # takes content in given cell in the parse table
+                parse_cell = self.iol_ptbl[stack[0]][token_index]
+                
+                # If cell is not empty, replace current production id with state id in the cell
+                if parse_cell != '':
+                    current_production_id = parse_cell
+                    
+                    # replace state with appropriate production according to the state id in the parse table
+                    stack.pop(0)
+                    production_by_id = self.iol_prod[current_production_id-1][1].split()
+                    
+                    # insert production atop the stack
+                    count = 0
+                    for production_element in production_by_id:
+                        # if element is 'e' do not add anything
+                        if production_element == 'e':
+                            continue
+                        else:
+                            stack.insert(count, production_element)
+                            count += 1
+                # if cell is empty, then input string is INVALID
+                else:
+                    # Di ko sure actually kung tama ning pag state nako
+                    print("Production is not able to produce given input token")
+                    print("Input String is INVALID")
+                    return
+  
+            # if first element of the stack is not a state, match with the first element of the input buffer                
+            else:
+                # if they match, pop both elements from the stack and input buffer and continue
+                if stack[0] == input_buffer[0]:
+                    input_buffer.pop(0)
+                    stack.pop(0)
+                    
+                # if they do not match, then input string is INVALID
+                else:
+                    print('\n', stack[0], " and ", input_buffer[0], ' do not match!')
+                    print("Input String is INVALID")
+                    return
+                
+            # print current stack, input buffer
+            print('Stack:', stack)
+            print('Input Buffer', input_buffer, '\n')
+
+        # If code has reached this far, then code is syntax valid
+        print("The provided code in syntax valid!")
         
 tokenized_window = None  # Global variable to track the tokenized window
 tokenized_code = None
