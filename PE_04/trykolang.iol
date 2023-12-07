@@ -8,16 +8,8 @@ IOL
     INTO res IS MULT num num
     PRINT msg2
     PRINT MULT num 2
-    NEWLN
+    NEWLN!!!
     PRINT msg3
     PRINT res
 LOI
-
-
-
-
-
-
-
-
 
