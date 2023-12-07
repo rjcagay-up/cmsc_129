@@ -31,12 +31,16 @@ class LexicalAnalyzer:
         if(len(self.variables) == 0):
             return False
         
-        var_presence = [variable for variable, datatype in self.variables if variable == word]
+        # var_presence = [variable for variable, datatype in self.variables if variable == word]
         
-        if(len(var_presence) == 0):
-            return False
+        # if(len(var_presence) == 0):
+        #     return False
         
-        return True
+        for variable in self.variables:
+            if(word == variable[0] and variable[1] != 'null'):
+                return True
+        
+        return False
 
     def analyze(self, code):
         self.tokens = []
@@ -46,6 +50,7 @@ class LexicalAnalyzer:
 
         for i, line in enumerate(lines, start=1):
             words = line.split()
+            token_list = []
             for word in words:
                 token = self.get_token(word)
                 self.tokens.append((token, word, i))
@@ -77,14 +82,15 @@ class LexicalAnalyzer:
     def show_errlex(self):
         errlex = [(word,line) for token, word, line in self.tokens if token == 'ERR_LEX']
         error_message = "Unknown words detected:"
+        update_status(error_message)
         
         for error in errlex:
             error_message += "\nUnknown word '" + str(error[0]) + "' detected at line " + str(error[1])
+            update_status(error_message)
+            update_status(f"{error_message}")
             
         return error_message
-
-
-
+    
 # Added new code 
 class SyntaxAnalyzer:
     def __init__(self):
@@ -218,8 +224,7 @@ class SyntaxAnalyzer:
 
         # If code has reached this far, then code is syntax valid
         update_status("The provided code in syntax valid!")
-
-    
+        
 tokenized_window = None  # Global variable to track the tokenized window
 tokenized_code = None
 compiled = False  # Variable to track compilation status
@@ -253,6 +258,8 @@ def compile_code(event=None):
     tokenized_code = ' '.join(token for token, _, _ in lexical_analyzer.tokens)
 
     update_status("Code tokenized successfully")
+    
+    
     compiled = True
 
     if 'ERR_LEX' in tokenized_code:
@@ -265,9 +272,12 @@ def compile_code(event=None):
             error_message += f"Error {i + 1} - {error_messages[i]}\n"
 
         update_status(error_message)
-        print(f"{error_message}")
+        update_status(f"{error_message}")
+        
     else:
         update_status("Code tokenized successfully")
+        
+    display_variables(lexical_analyzer.variables)
     
     compiled = True
     # Save the compiled code to a .tkn file
