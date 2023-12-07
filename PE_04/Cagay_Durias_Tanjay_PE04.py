@@ -31,12 +31,16 @@ class LexicalAnalyzer:
         if(len(self.variables) == 0):
             return False
         
-        var_presence = [variable for variable, datatype in self.variables if variable == word]
+        # var_presence = [variable for variable, datatype in self.variables if variable == word]
         
-        if(len(var_presence) == 0):
-            return False
+        # if(len(var_presence) == 0):
+        #     return False
         
-        return True
+        for variable in self.variables:
+            if(word == variable[0] and variable[1] != 'null'):
+                return True
+        
+        return False
 
     def analyze(self, code):
         self.tokens = []
@@ -109,6 +113,7 @@ class SyntaxAnalyzer:
             ["expr", "MOD expr expr"],
             ["expr", "IDENT"],
             ["expr", "INT_LIT"],
+            ["stmt", "expr"]
         ]
         
         # List of terminals and parsing table of the IOL PL
@@ -134,7 +139,7 @@ class SyntaxAnalyzer:
             ],
             
             "s": [1, "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-            "stmts": ["", 2, 2, 2, 2, 2, 2, 3, "", "", "", "", "", "", "", ""],
+            "stmts": ["", 2, 2, 2, 2, 2, 2, 3, "", 22, 22, 22, 22, 22, "", ""],
             "stmt": ["", 4, 4, 5, 5, 6, 7, "", "", "", "", "", "", "", "", ""],
             "var": ["", 8, 9, "", "", "", "", "", "", "", "", "", "", "", "", ""],
             "varend": ["", 11, 11, 11, 11, 11, 11, 11, 10, "", "", "", "", "", "", ""],
@@ -142,14 +147,16 @@ class SyntaxAnalyzer:
             "out": ["", "", "", "", "", 14, "", "", "", "", "", "", "", "", "", ""],
             "expr": ["", "", "", "", "", "", "", "", "", 15, 16, 17, 18, 19, 20, 21],
         }
+
+    def analyze(self, tokens, lexical_analyzer):
         
-    def analyze(self, tokens):
+        semantic_case = ''
         
         input_buffer = tokens
         input_buffer.append(('$','$',None))
         
         # Initializing stack with the initial state and '$'
-        stack = [self.iol_prod[0][0],'$'] 
+        stack = [self.iol_prod[0][0],'$']
         
         # Initialize current production id to initial state
         current_production_id = 1
@@ -202,11 +209,20 @@ class SyntaxAnalyzer:
                 # if they match, pop both elements from the stack and input buffer and continue
                 if stack[0] == input_buffer[0][0]:
                     input_buffer.pop(0)
-                    stack.pop(0)
+                    popped_token = stack.pop(0)
+                    
+                    # match popped_token[0]:
+                    #     case "INT" | "STR":
+                    #         semantic_case = "DECLARE"
+                    #     case "INTO":
+                    #         semantic_case = "INTO"
+                    #     case "ADD" | "SUB" | "MULT" | "DIV" | "MOD":
+                    #         if lexical_analyzer.itISvariable(last_iden_token[1]):
+                    #             if semantic_case == "IS" and 
+                            
                     
                 # if they do not match, then input string is INVALID
                 else:
-                    print('\n', stack[0], " and ", input_buffer[0], ' do not match!')
                     print("Error in line ", input_buffer[0][2],": Expected syntax is:\n", ' '.join(self.iol_prod[current_production_id-1][1].split()))
                     return
                 
@@ -215,7 +231,7 @@ class SyntaxAnalyzer:
             print('Input Buffer: [', ', '.join(token for token, _, _ in input_buffer), ']\n')
 
         # If code has reached this far, then code is syntax valid
-        print("The provided code in syntax valid!")
+        print("The provided code is syntax valid!")
         
 tokenized_window = None  # Global variable to track the tokenized window
 tokenized_code = None
@@ -285,7 +301,7 @@ def compile_code(event=None):
     # After compilation, syntax analysis
     
     syntax_analyzer = SyntaxAnalyzer()
-    syntax_analyzer.analyze(lexical_analyzer.tokens)
+    syntax_analyzer.analyze(lexical_analyzer.tokens, lexical_analyzer)
 
 # Function for showing the tokenized code
 def show_tokenized_code(event=None):
@@ -338,7 +354,7 @@ def open_file(event=None):
         root.title(f"PL Compiler - {os.path.basename(file_path)}")
         new_file_created = False  # Reset new_file_created
 
-linenum0 = 0
+
 def new_file(event=None):
     global new_file_created, editor_path
 
@@ -405,30 +421,6 @@ def close_file(event=None):
         new_file_created = True
         root.title("PL Compiler")
 
-def update_line_numbers(event=None):
-    global linenum0
-
-    line_num.delete("1.0", tk.END)  # Clear previous line numbers
-    line_num.insert(tk.END, "1\n")
-
-    # Get the number of lines in the editor
-    num_lines = int(editor.index(tk.END).split('.')[0])
-
-    for i in range(2, num_lines + 1):
-        line_num.insert(tk.END, f"{i}\n")
-
-    # Update linenum0 to the new number of lines
-    linenum0 = num_lines
-
-    # Adjust the yview to synchronize scrolling
-    on_editor_scroll()
-
-
-# Add the function to update line numbers on editor scroll
-def on_editor_scroll(*args):
-    # Set the yview of the line numbers to match the text editor's yview
-    line_num.yview_moveto(editor.yview()[0])
-
 # GUI setup
 root = tk.Tk()
 root.title("PL Compiler")
@@ -473,55 +465,19 @@ root.bind('<F12>', execute_code)
 root.config(menu=menubar)
 
 # Editor section
-editor_frame = tk.Canvas(main_frame)
-editor_frame.grid(row=1, column=1, sticky="nsew")
+editor_frame = tk.Frame(main_frame, bg="yellow")
+editor_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-# Editor label outside the editor_frame
-editor_label = tk.Label(main_frame, text="Editor", font=("Helvetica", 14), bg="yellow")
-editor_label.grid(row=0, column=1, sticky="w")  # Highlighted change
+editor_label = tk.Label(editor_frame, text="Editor", font=("Helvetica", 14), bg="yellow")
+editor_label.pack()
 
-editor = ScrolledText(editor_frame, wrap=tk.WORD, font=("Courier New", 12))
+editor = ScrolledText(editor_frame, wrap=tk.WORD)
 editor.pack(fill=tk.BOTH, expand=True)
 editor.config(state=tk.DISABLED)  # Disable the editor initially
 
-# Bind the editor's scrollbar drag event to update line numbers
-editor.vbar.bind("<B1-Motion>", on_editor_scroll)
-
-# Bind the yscroll command of the editor's scrollbar to update line numbers
-editor.vbar.config(command=on_editor_scroll)
-
-# Line Numbers section
-line_frame = tk.Canvas(main_frame, width=2, bg="lightgrey")
-line_frame.grid(row=1, column=0, sticky="nsew")
-
-line_num = ScrolledText(line_frame, wrap=tk.WORD, font=("Courier New", 12), width=2, takefocus=0)
-line_num.pack(fill=tk.BOTH, expand=True)
-
-# Disable the y-scrollbar of line_num
-line_num.vbar.configure(command=line_num.yview)
-line_num.vbar.forget()
-
-# Bind the <Key> and <KeyRelease> events to update line numbers
-editor.bind("<Key>", update_line_numbers)
-editor.bind("<KeyRelease>", update_line_numbers)
-
-# Bind the editor's scrolling event to update line numbers
-editor.bind("<Configure>", lambda event: update_line_numbers())
-editor.bind("<MouseWheel>", lambda event: update_line_numbers())
-editor.bind("<Button-4>", lambda event: update_line_numbers())
-editor.bind("<Button-5>", lambda event: update_line_numbers())
-
-
-# Initial population of line numbers
-update_line_numbers()
-
-# Status bar
-status = tk.Label(main_frame, text="Status: Create new file or open file to begin", bd=1, relief=tk.SUNKEN, anchor=tk.W, height=5, font=("Helvetica", 12), bg="pink")
-status.grid(row=2, column=0, columnspan=2, sticky="nsew")
-
 # Variables table section
 table_frame = tk.Frame(main_frame, bg="yellow")
-table_frame.grid(row=0, column=2, rowspan=3, sticky="nsew")
+table_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 table_label = tk.Label(table_frame, text="Variables Table", font=("Helvetica", 14), bg="yellow")
 table_label.pack()
@@ -529,13 +485,8 @@ table_label.pack()
 table = ScrolledText(table_frame, wrap=tk.WORD)
 table.pack(fill=tk.BOTH, expand=True)
 
-# Set column and row weights to make them resize properly
-main_frame.columnconfigure(0, weight=0)
-main_frame.columnconfigure(1, weight=1)
-main_frame.columnconfigure(2, weight=1)
-main_frame.rowconfigure(0, weight=1)
-main_frame.rowconfigure(1, weight=1)
-
-
+# Status bar
+status = tk.Label(root, text="Status: Create new file or open file to begin", bd=1, relief=tk.SUNKEN, anchor=tk.W, height=5, font=("Helvetica", 12), bg="pink")
+status.pack(side=tk.BOTTOM, fill=tk.X)
 
 root.mainloop()
