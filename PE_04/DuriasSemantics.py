@@ -239,7 +239,7 @@ class SyntaxAnalyzer:
                             statement.append(popped_token[1])
                             if last_ident_token[1] in declared_vars:
                                 if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
                             semantic_case = "MATH"
                         case "IS":
@@ -257,18 +257,18 @@ class SyntaxAnalyzer:
                                 error_statements += f"Undefined variable '{popped_token[1]}' in line '{popped_token[2]}'\n"
                             elif semantic_case == "IS":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]) != lexical_analyzer.variableTYPEcheck(last_ident_token[0]):
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
                             elif semantic_case == "MATH":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]):
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
                             last_ident_token = popped_token
                         case "INT_LIT":
                             statement.append(popped_token[1])
                             if last_ident_token[1] in declared_vars:
                                 if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error '{''.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
                         case _:
                             statement.clear()
@@ -389,7 +389,7 @@ def display_variables(variables):
 
 def update_status(*messages):
     status_message = " ".join(str(message) for message in messages)
-    status.config(text=f"Status: {status_message}")
+    status.config(text=f"Status: {status_message}", wraplength=500)
 
 
 linenum0 = 0
@@ -410,6 +410,7 @@ def open_file(event=None):
             file_content = file.readlines()
         editor.insert(tk.END, ''.join(file_content))
         linenum0 = len(file_content)
+        update_line_numbers()  # Call the function to update line numbers
         update_status(f"File Opened: {file_path}")
         editor_path = file_path
         root.title(f"PL Compiler - {os.path.basename(file_path)}")
@@ -512,10 +513,6 @@ root.title("PL Compiler")
 root.configure(bg="yellow")
 toolbar = tk.Frame(root, bg="pink")
 toolbar.pack(fill=tk.X)
-
-# # Main UI components
-# main_frame = tk.Frame(root, bg="yellow")
-# main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
 # create a toplevel menu  
 menubar = tk.Menu(root)
