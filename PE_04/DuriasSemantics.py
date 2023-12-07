@@ -159,6 +159,7 @@ class SyntaxAnalyzer:
     def analyze(self, tokens, lexical_analyzer):
         
         error_statements = ""
+        declared_vars = list()
         statement = list()
         semantic_case = None
         last_ident_token = None
@@ -233,7 +234,7 @@ class SyntaxAnalyzer:
                             statement.append(popped_token[1])
                         case "ADD" | "SUB" | "MULT" | "DIV" | "MOD":
                             statement.append(popped_token[1])
-                            if lexical_analyzer.itISvariable(last_ident_token[1]):
+                            if last_ident_token[1] in declared_vars:
                                 if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(popped_token[1]) != "INT":
                                     error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
@@ -244,10 +245,12 @@ class SyntaxAnalyzer:
                         case "IDENT":
                             statement.append(popped_token[1])
                             if semantic_case == "DECLARE":
-                                if lexical_analyzer.itISvariable(popped_token[1]):
+                                if popped_token[1] in declared_vars:
                                     error_statements += f"Duplicate variable declaration '{popped_token[1]}' in line '{popped_token[2]}'\n"
+                                else:
+                                    declared_vars.append(popped_token[1])
                                 semantic_case = None
-                            elif not lexical_analyzer.itISvariable(popped_token[1]):
+                            elif popped_token[1] not in declared_vars:
                                 error_statements += f"Undefined variable '{popped_token[1]}' in line '{popped_token[2]}'\n"
                             elif semantic_case == "IS":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]) != lexical_analyzer.variableTYPEcheck(last_ident_token[0]):
@@ -260,7 +263,7 @@ class SyntaxAnalyzer:
                             last_ident_token = popped_token
                         case "INT_LIT":
                             statement.append(popped_token[1])
-                            if lexical_analyzer.itISvariable(last_ident_token[1]):
+                            if last_ident_token[1] in declared_vars:
                                 if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
                                     error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
@@ -279,8 +282,9 @@ class SyntaxAnalyzer:
             print('Input Buffer: [', ', '.join(token for token, _, _ in input_buffer), ']\n')
 
         # If code has reached this far, then code is syntax valid
-        print("The provided code is syntax valid!")
+        print("The provided code is syntax valid!\n")
         
+        print("Semantic Error List:")
         print(error_statements)
         
 tokenized_window = None  # Global variable to track the tokenized window
