@@ -291,6 +291,7 @@ def update_line_numbers(event=None):
 def on_editor_scroll(*args):
     # Set the yview of the line numbers to match the text editor's yview
     line_num.yview_moveto(editor.yview()[0])
+    
 # GUI setup
 root = tk.Tk()
 root.title("PL Compiler")
