@@ -162,12 +162,12 @@ class SyntaxAnalyzer:
         while len(input_buffer) != 0:
         
             # Checks if current token in the input buffer exists as possible input  
-            if not input_buffer[0] in self.iol_ptbl["terminals"]:
-                print("\n'", input_buffer[0], "' does not exist in the parse table") # Make error statement
+            if not input_buffer[0][0] in self.iol_ptbl["terminals"]:
+                print("\n'", input_buffer[0][0], "' does not exist in the parse table") # Make error statement
                 return
             # if token exists, then get index for reference
             else:
-                token_index = self.iol_ptbl["terminals"].index(input_buffer[0])
+                token_index = self.iol_ptbl["terminals"].index(input_buffer[0][0])
             
             # if first element on the stack is a state, then refer to parse table if state id exists for the given token
             if stack[0] in self.iol_ptbl and stack[0] != 'terminals':
