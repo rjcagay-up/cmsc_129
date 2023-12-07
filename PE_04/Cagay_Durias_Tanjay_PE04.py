@@ -41,6 +41,14 @@ class LexicalAnalyzer:
                 return True
         
         return False
+    
+    def variableTYPEcheck(self, word):
+        vari = dict(self.variables)
+        
+        if word in vari:
+            return vari[word]
+        else:
+            return None
 
     def analyze(self, code):
         self.tokens = []
@@ -150,7 +158,11 @@ class SyntaxAnalyzer:
 
     def analyze(self, tokens, lexical_analyzer):
         
-        semantic_case = ''
+        # vars related to type checking
+        declared_vars = list()
+        statement = list()
+        semantic_case = None
+        last_ident_token = None
         
         input_buffer = tokens
         input_buffer.append(('$','$',None))
@@ -208,19 +220,57 @@ class SyntaxAnalyzer:
             else:
                 # if they match, pop both elements from the stack and input buffer and continue
                 if stack[0] == input_buffer[0][0]:
-                    input_buffer.pop(0)
-                    popped_token = stack.pop(0)
+                    stack.pop(0)
+                    popped_token = input_buffer.pop(0)
                     
-                    # match popped_token[0]:
-                    #     case "INT" | "STR":
-                    #         semantic_case = "DECLARE"
-                    #     case "INTO":
-                    #         semantic_case = "INTO"
-                    #     case "ADD" | "SUB" | "MULT" | "DIV" | "MOD":
-                    #         if lexical_analyzer.itISvariable(last_iden_token[1]):
-                    #             if semantic_case == "IS" and 
+                    match popped_token[0]:
+                        case "INT" | "STR":
+                            semantic_case = "DECLARE"
+                            statement.clear()
+                            statement.append(popped_token[1])
+                        case "INTO":
+                            semantic_case = "INTO"
+                            statement.clear()
+                            statement.append(popped_token[1])
+                        case "ADD" | "SUB" | "MULT" | "DIV" | "MOD":
+                            statement.append(popped_token[1])
+                            if lexical_analyzer.itISvariable(last_ident_token[1]):
+                                if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(popped_token[1]) != "INT":
+                                    print("Type error ", " ".join(statement)," in line ", popped_token[2]," ",{last_ident_token[1]}, "is of type ", lexical_analyzer.variableTYPEcheck(last_ident_token[1]))
+                                    semantic_case = None
+                            semantic_case = "MATH"
+                        case "IS":
+                            semantic_case = "IS"
+                            statement.append(popped_token[1])
+                        case "IDENT":
+                            statement.append(popped_token[1])
+                            if semantic_case == "DECLARE":
+                                if lexical_analyzer.itISvariable(popped_token[1]):
+                                    print("Duplicate variable declaration ", {popped_token[1]}," in line ", popped_token[2])
+                                semantic_case = None
+                            elif not lexical_analyzer.itISvariable(popped_token[1]):
+                                print("Undefined variable ", popped_token[1], " in line ", popped_token[2])
+                            elif semantic_case == "IS":
+                                if lexical_analyzer.variableTYPEcheck(popped_token[1]) != lexical_analyzer.variableTYPEcheck(last_ident_token[0]):
+                                    print("Type error ", " ".join(statement), " in line ", popped_token[2], " ", last_ident_token[1], " is of type ", lexical_analyzer.variableTYPEcheck(last_ident_token[1]))
+                                semantic_case = None
+                            elif semantic_case == "MATH":
+                                if lexical_analyzer.variableTYPEcheck(popped_token[1]):
+                                    print("Type error ", " ".join(statement), " in line ", popped_token[2], " ", last_ident_token[1], " is of type ", lexical_analyzer.variableTYPEcheck(last_ident_token[1]))
+                                    semantic_case = None
+                            last_ident_token = popped_token
+                        case "INT_LIT":
+                            statement.append(popped_token[1])
+                            if lexical_analyzer.itISvariable(last_ident_token[1]):
+                                if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
+                                     print("Type error ", " ".join(statement), " in line ", popped_token[2], " ", last_ident_token[1], " is of type ", lexical_analyzer.variableTYPEcheck(last_ident_token[1]))
+                                semantic_case = None
+                        case _:
+                            statement.clear()
+                            print(popped_token)
+                            statement.append(popped_token[1])
+                            semantic_case = None                           
                             
-                    
                 # if they do not match, then input string is INVALID
                 else:
                     print("Error in line ", input_buffer[0][2],": Expected syntax is:\n", ' '.join(self.iol_prod[current_production_id-1][1].split()))
