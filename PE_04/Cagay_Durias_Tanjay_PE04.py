@@ -194,7 +194,7 @@ class SyntaxAnalyzer:
                             count += 1
                 # if cell is empty, then input string is INVALID
                 else:
-                    print("Error in line ", input_buffer[0][2],": Expected syntax is ", self.iol_prod[current_production_id-1][1].split())
+                    print("Error in line ", input_buffer[0][2],": Expected syntax is ", ' '.join(self.iol_prod[current_production_id-1][1].split()))
                     return
   
             # if first element of the stack is not a state, match with the first element of the input buffer                
@@ -207,7 +207,7 @@ class SyntaxAnalyzer:
                 # if they do not match, then input string is INVALID
                 else:
                     print('\n', stack[0], " and ", input_buffer[0], ' do not match!')
-                    print("Error in line ", input_buffer[0][2],": Expected syntax is ", self.iol_prod[current_production_id-1][1].split())
+                    print("Error in line ", input_buffer[0][2],": Expected syntax is ", ' '.join(self.iol_prod[current_production_id-1][1].split()))
                     return
                 
             # print current stack, input buffer
