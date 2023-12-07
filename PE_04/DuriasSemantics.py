@@ -236,7 +236,7 @@ class SyntaxAnalyzer:
                             statement.append(popped_token[1])
                             if last_ident_token[1] in declared_vars:
                                 if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(popped_token[1]) != "INT":
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error {' '.join(statement)} in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
                             semantic_case = "MATH"
                         case "IS":
@@ -254,18 +254,18 @@ class SyntaxAnalyzer:
                                 error_statements += f"Undefined variable '{popped_token[1]}' in line '{popped_token[2]}'\n"
                             elif semantic_case == "IS":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]) != lexical_analyzer.variableTYPEcheck(last_ident_token[0]):
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error {' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
                             elif semantic_case == "MATH":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]):
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
                             last_ident_token = popped_token
                         case "INT_LIT":
                             statement.append(popped_token[1])
                             if last_ident_token[1] in declared_vars:
                                 if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
                         case _:
                             statement.clear()
@@ -385,9 +385,9 @@ def display_variables(variables):
         table.insert(tk.END, f"Variable: {variable}, Type: {v_type}\n")
 
 def update_status(message):
-    status.config(text=f"Status: {message}")
+    status.config(text=f"Status: {message}", wraplength=500)
 
-
+linenum0 = 0
 # Function to open a PL file (.iol)
 def open_file(event=None):
     global editor_path, new_file_created
@@ -403,6 +403,7 @@ def open_file(event=None):
             editor.config(state=tk.NORMAL)  # Enable editing
             editor.delete(1.0, tk.END)
             editor.insert(tk.END, file.read())
+        update_line_numbers()  # Call the function to update line numbers
         update_status(f"File Opened: {file_path}")
         editor_path = file_path
         root.title(f"PL Compiler - {os.path.basename(file_path)}")
@@ -475,6 +476,26 @@ def close_file(event=None):
         new_file_created = True
         root.title("PL Compiler")
 
+def update_line_numbers(event=None):
+    global linenum0
+
+    line_num.delete("1.0", tk.END)  # Clear previous line numbers
+
+    # Get the number of lines in the editor
+    num_lines = int(editor.index(tk.END).split('.')[0])
+
+    for i in range(1, num_lines + 1):
+        line_num.insert(tk.END, f"{i}\n")
+
+    # Adjust the yview to synchronize scrolling
+    on_editor_scroll()
+
+
+# Add the function to update line numbers on editor scroll
+def on_editor_scroll(*args):
+    # Set the yview of the line numbers to match the text editor's yview
+    line_num.yview_moveto(editor.yview()[0])
+    
 # GUI setup
 root = tk.Tk()
 root.title("PL Compiler")
@@ -482,9 +503,9 @@ root.configure(bg="yellow")
 toolbar = tk.Frame(root, bg="pink")
 toolbar.pack(fill=tk.X)
 
-# Main UI components
-main_frame = tk.Frame(root, bg="yellow")
-main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+# # Main UI components
+# main_frame = tk.Frame(root, bg="yellow")
+# main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
 # create a toplevel menu  
 menubar = tk.Menu(root)
@@ -518,20 +539,60 @@ root.bind('<F12>', execute_code)
 # display the menu  
 root.config(menu=menubar)
 
+# Main UI components
+main_frame = tk.Frame(root, bg="yellow")
+main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
 # Editor section
-editor_frame = tk.Frame(main_frame, bg="yellow")
-editor_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+editor_frame = tk.Canvas(main_frame)
+editor_frame.grid(row=1, column=1, sticky="nsew")
 
-editor_label = tk.Label(editor_frame, text="Editor", font=("Helvetica", 14), bg="yellow")
-editor_label.pack()
+# Editor label outside the editor_frame
+editor_label = tk.Label(main_frame, text="Editor", font=("Helvetica", 14), bg="yellow")
+editor_label.grid(row=0, column=1, sticky="w")  # Highlighted change
 
-editor = ScrolledText(editor_frame, wrap=tk.WORD)
+editor = ScrolledText(editor_frame, wrap=tk.WORD, font=("Courier New", 12))
 editor.pack(fill=tk.BOTH, expand=True)
 editor.config(state=tk.DISABLED)  # Disable the editor initially
 
+# Bind the editor's scrollbar drag event to update line numbers
+editor.vbar.bind("<B1-Motion>", on_editor_scroll)
+
+# Bind the yscroll command of the editor's scrollbar to update line numbers
+editor.vbar.config(command=on_editor_scroll)
+
+# Line Numbers section
+line_frame = tk.Canvas(main_frame, width=2, bg="lightgrey")
+line_frame.grid(row=1, column=0, sticky="nsew")
+
+line_num = ScrolledText(line_frame, wrap=tk.WORD, font=("Courier New", 12), width=2, takefocus=0)
+line_num.pack(fill=tk.BOTH, expand=True)
+
+# Disable the y-scrollbar of line_num
+line_num.vbar.configure(command=line_num.yview)
+line_num.vbar.forget()
+
+# Bind the <Key> and <KeyRelease> events to update line numbers
+editor.bind("<Key>", update_line_numbers)
+editor.bind("<KeyRelease>", update_line_numbers)
+
+# Bind the editor's scrolling event to update line numbers
+editor.bind("<Configure>", lambda event: update_line_numbers())
+editor.bind("<MouseWheel>", lambda event: update_line_numbers())
+editor.bind("<Button-4>", lambda event: update_line_numbers())
+editor.bind("<Button-5>", lambda event: update_line_numbers())
+
+
+# Initial population of line numbers
+update_line_numbers()
+
+# Status bar
+status = tk.Label(main_frame, text="Status: Create new file or open file to begin", bd=1, relief=tk.SUNKEN, anchor=tk.W, height=5, font=("Helvetica", 12), bg="pink")
+status.grid(row=2, column=0, columnspan=2, sticky="nsew")
+
 # Variables table section
 table_frame = tk.Frame(main_frame, bg="yellow")
-table_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+table_frame.grid(row=0, column=2, rowspan=3, sticky="nsew")
 
 table_label = tk.Label(table_frame, text="Variables Table", font=("Helvetica", 14), bg="yellow")
 table_label.pack()
@@ -539,8 +600,13 @@ table_label.pack()
 table = ScrolledText(table_frame, wrap=tk.WORD)
 table.pack(fill=tk.BOTH, expand=True)
 
-# Status bar
-status = tk.Label(root, text="Status: Create new file or open file to begin", bd=1, relief=tk.SUNKEN, anchor=tk.W, height=5, font=("Helvetica", 12), bg="pink")
-status.pack(side=tk.BOTTOM, fill=tk.X)
+# Set column and row weights to make them resize properly
+main_frame.columnconfigure(0, weight=0)
+main_frame.columnconfigure(1, weight=1)
+main_frame.columnconfigure(2, weight=1)
+main_frame.rowconfigure(0, weight=1)
+main_frame.rowconfigure(1, weight=1)
+
+
 
 root.mainloop()
