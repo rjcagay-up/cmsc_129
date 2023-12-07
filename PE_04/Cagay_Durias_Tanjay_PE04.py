@@ -145,14 +145,8 @@ class SyntaxAnalyzer:
         
     def analyze(self, tokens):
         
-        input_text = ''
-        
-        for token, _, _ in tokens:
-            input_text += token + " "
-        
-        # Splits the input text by white space into a list and appends '$' at the end to create the input buffer
-        input_buffer = input_text.split()
-        input_buffer.append('$')
+        input_buffer = tokens
+        input_buffer.append(('$','$',None))
         
         # Initializing stack with the initial state and '$'
         stack = [self.iol_prod[0][0],'$'] 
@@ -162,7 +156,7 @@ class SyntaxAnalyzer:
         
         # print initial stack and input buffer
         print('Initial Stack:', stack)
-        print('Initial Input Buffer:', input_buffer, '\n')
+        print('Initial Input Buffer: [', ', '.join(token for token, _, _ in input_buffer), ']\n')
         
         # Goes through each of the tokens in the input buffer until nothing is left or an error occurs
         while len(input_buffer) != 0:
@@ -200,27 +194,25 @@ class SyntaxAnalyzer:
                             count += 1
                 # if cell is empty, then input string is INVALID
                 else:
-                    # Di ko sure actually kung tama ning pag state nako
-                    print("Production is not able to produce given input token")
-                    print("Input String is INVALID")
+                    print("Error in line ", input_buffer[0][2],": Expected syntax is ", self.iol_prod[current_production_id-1][1].split())
                     return
   
             # if first element of the stack is not a state, match with the first element of the input buffer                
             else:
                 # if they match, pop both elements from the stack and input buffer and continue
-                if stack[0] == input_buffer[0]:
+                if stack[0] == input_buffer[0][0]:
                     input_buffer.pop(0)
                     stack.pop(0)
                     
                 # if they do not match, then input string is INVALID
                 else:
                     print('\n', stack[0], " and ", input_buffer[0], ' do not match!')
-                    print("Input String is INVALID")
+                    print("Error in line ", input_buffer[0][2],": Expected syntax is ", self.iol_prod[current_production_id-1][1].split())
                     return
                 
             # print current stack, input buffer
             print('Stack:', stack)
-            print('Input Buffer', input_buffer, '\n')
+            print('Input Buffer: [', ', '.join(token for token, _, _ in input_buffer), ']\n')
 
         # If code has reached this far, then code is syntax valid
         print("The provided code in syntax valid!")
