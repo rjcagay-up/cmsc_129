@@ -90,9 +90,12 @@ class LexicalAnalyzer:
     def show_errlex(self):
         errlex = [(word,line) for token, word, line in self.tokens if token == 'ERR_LEX']
         error_message = "Unknown words detected:"
+        update_status(error_message)
         
         for error in errlex:
             error_message += "\nUnknown word '" + str(error[0]) + "' detected at line " + str(error[1])
+            update_status(error_message)
+            update_status(f"{error_message}")
             
         return error_message
     
@@ -235,8 +238,8 @@ class SyntaxAnalyzer:
                         case "ADD" | "SUB" | "MULT" | "DIV" | "MOD":
                             statement.append(popped_token[1])
                             if last_ident_token[1] in declared_vars:
-                                if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(popped_token[1]) != "INT":
-                                    error_statements += f"Type error {' '.join(statement)} in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
+                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
                             semantic_case = "MATH"
                         case "IS":
@@ -254,18 +257,18 @@ class SyntaxAnalyzer:
                                 error_statements += f"Undefined variable '{popped_token[1]}' in line '{popped_token[2]}'\n"
                             elif semantic_case == "IS":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]) != lexical_analyzer.variableTYPEcheck(last_ident_token[0]):
-                                    error_statements += f"Type error {' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
                             elif semantic_case == "MATH":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]):
-                                    error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
                             last_ident_token = popped_token
                         case "INT_LIT":
                             statement.append(popped_token[1])
                             if last_ident_token[1] in declared_vars:
                                 if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
-                                    error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
                         case _:
                             statement.clear()
@@ -276,16 +279,12 @@ class SyntaxAnalyzer:
                 else:
                     error_statements += f"Error in line '{input_buffer[0][2]}': Expected syntax is:\n'{' '.join(self.iol_prod[current_production_id-1][1].split())}'\n"
                     return
-                
-            # print current stack, input buffer
-            print('Stack:', stack)
-            print('Input Buffer: [', ', '.join(token for token, _, _ in input_buffer), ']\n')
 
         # If code has reached this far, then code is syntax valid
-        print("The provided code is syntax valid!\n")
+        update_status("The provided code is syntax valid!")
         
-        print("Semantic Error List:")
-        print(error_statements)
+        update_status(error_statements)
+        update_status(f"{error_statements}")
         
 tokenized_window = None  # Global variable to track the tokenized window
 tokenized_code = None
@@ -320,6 +319,8 @@ def compile_code(event=None):
     tokenized_code = ' '.join(token for token, _, _ in lexical_analyzer.tokens)
 
     update_status("Code tokenized successfully")
+    
+    
     compiled = True
 
     if 'ERR_LEX' in tokenized_code:
@@ -332,10 +333,11 @@ def compile_code(event=None):
             error_message += f"Error {i + 1} - {error_messages[i]}\n"
 
         update_status(error_message)
-        print(f"{error_message}")
+        update_status(f"{error_message}")
+        
     else:
         update_status("Code tokenized successfully")
-    
+        
     display_variables(lexical_analyzer.variables)
     
     compiled = True
@@ -351,8 +353,9 @@ def compile_code(event=None):
         print(f"Compiled code saved as: {tkn_path}")
     else:
         print("No filename to save the compiled code.")
-        
-    # After compilation, syntax analysis
+
+    display_variables(lexical_analyzer.variables)
+    
     
     syntax_analyzer = SyntaxAnalyzer()
     syntax_analyzer.analyze(lexical_analyzer.tokens, lexical_analyzer)
@@ -384,13 +387,15 @@ def display_variables(variables):
     for variable, v_type in variables:
         table.insert(tk.END, f"Variable: {variable}, Type: {v_type}\n")
 
-def update_status(message):
-    status.config(text=f"Status: {message}", wraplength=500)
+def update_status(*messages):
+    status_message = " ".join(str(message) for message in messages)
+    status.config(text=f"Status: {status_message}")
+
 
 linenum0 = 0
 # Function to open a PL file (.iol)
 def open_file(event=None):
-    global editor_path, new_file_created
+    global editor_path, new_file_created, linenum0
 
     if new_file_created:
         response = messagebox.askyesnocancel("Open File", "Opening a new file will discard the unsaved changes. Do you want to proceed?")
@@ -402,8 +407,9 @@ def open_file(event=None):
         with open(file_path, 'r') as file:
             editor.config(state=tk.NORMAL)  # Enable editing
             editor.delete(1.0, tk.END)
-            editor.insert(tk.END, file.read())
-        update_line_numbers()  # Call the function to update line numbers
+            file_content = file.readlines()
+        editor.insert(tk.END, ''.join(file_content))
+        linenum0 = len(file_content)
         update_status(f"File Opened: {file_path}")
         editor_path = file_path
         root.title(f"PL Compiler - {os.path.basename(file_path)}")
@@ -480,12 +486,16 @@ def update_line_numbers(event=None):
     global linenum0
 
     line_num.delete("1.0", tk.END)  # Clear previous line numbers
+    line_num.insert(tk.END, "1\n")
 
     # Get the number of lines in the editor
     num_lines = int(editor.index(tk.END).split('.')[0])
 
-    for i in range(1, num_lines + 1):
+    for i in range(2, num_lines + 1):
         line_num.insert(tk.END, f"{i}\n")
+
+    # Update linenum0 to the new number of lines
+    linenum0 = num_lines
 
     # Adjust the yview to synchronize scrolling
     on_editor_scroll()
