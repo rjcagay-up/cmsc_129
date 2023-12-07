@@ -53,7 +53,7 @@ class LexicalAnalyzer:
                 if token == 'IDENT' and not(self.itISvariable(word)) and len(self.tokens) != 1:
                     
                     prev = self.tokens[len(self.tokens)-2]
-                    
+                        
                     if (self.itISdatatype(prev[0])):
                         self.variables.add((word, prev[0]))
                     else:
