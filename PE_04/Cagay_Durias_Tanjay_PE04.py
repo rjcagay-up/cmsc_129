@@ -4,6 +4,7 @@ from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
 from tkinter import messagebox
 from tkinter import *  
+from execution import *
 
 editor_path = None  # Variable to track the file path associated with the editor content
 # Define a variable to track whether a new file has been created
@@ -37,7 +38,7 @@ class LexicalAnalyzer:
         #     return False
         
         for variable in self.variables:
-            if(word == variable[0] and variable[1] != 'null'):
+            if word == variable[0]:
                 return True
         
         return False
@@ -61,19 +62,41 @@ class LexicalAnalyzer:
             token_list = []
             for word in words:
                 token = self.get_token(word)
-                self.tokens.append((token, word, i))
+                # self.tokens.append((token, word, i))
                 
-                if token == 'IDENT' and not(self.itISvariable(word)) and len(self.tokens) != 1:
-                    
-                    prev = self.tokens[len(self.tokens)-2]
+                #if identifier not in symbol table (self.variables)
+                if token == 'IDENT' and self.itISvariable(word) == False:
+                    prev = self.tokens[-1]
+                    self.tokens.append((token, word, i))
                     
                     if (self.itISdatatype(prev[0])):
                         self.variables.add((word, prev[0]))
+                        
+                        if prev[0] == 'INT':
+                            token_stream.append((token, word, i, 0))
+                            # tok = list(token_stream[-1])
+                            # tok[3] = 0
+                            # token_stream[-1] = tuple(tok)
+                        else:
+                            token_stream.append((token, word, i, ''))
+                            # tok = list(token_stream[-1])
+                            # tok[3] = ''
+                            # token_stream[-1] = tuple(tok)
                     else:
                         self.variables.add((word, 'null'))
                         
-                elif token == 'IDENT' and len(self.tokens) == 1:
+                elif token == 'IDENT' and self.itISvariable(word) == True:
+                    self.tokens.append((token, word, i))
+                    for tok in token_stream:
+                        if isinstance(tok, tuple) and tok[0] == 'IDENT' and tok[1] == 'num':
+                            token_stream.append(tok)
+                            break
                     self.variables.add((word, 'null'))
+                else:
+                    self.tokens.append((token, word, i))
+                    token_stream.append((token, word, i))
+                
+        print(self.tokens)
 
     def get_token(self, word):
         if (self.itISkeyword(word)):
@@ -159,6 +182,7 @@ class SyntaxAnalyzer:
     def analyze(self, tokens, lexical_analyzer):
         
         error_statements = ""
+        declared_vars = list()
         statement = list()
         semantic_case = None
         last_ident_token = None
@@ -172,16 +196,17 @@ class SyntaxAnalyzer:
         # Initialize current production id to initial state
         current_production_id = 1
         
+        index = 0
+        
         # print initial stack and input buffer
-        print('Initial Stack:', stack)
-        print('Initial Input Buffer: [', ', '.join(token for token, _, _ in input_buffer), ']\n')
+        # print('Initial Stack:', stack)
+        # print('Initial Input Buffer: [', ', '.join(token for token, _, _ in input_buffer), ']\n')
         
         # Goes through each of the tokens in the input buffer until nothing is left or an error occurs
         while len(input_buffer) != 0:
-        
             # Checks if current token in the input buffer exists as possible input  
             if not input_buffer[0][0] in self.iol_ptbl["terminals"]:
-                error_statements += f"\n'{input_buffer[0][0]}' does not exist in the parse table\n" # Make error statement
+                update_status(f"\n'{input_buffer[0][0]}' does not exist in the parse table\n") # Make error statement
                 return
             # if token exists, then get index for reference
             else:
@@ -198,7 +223,7 @@ class SyntaxAnalyzer:
                     current_production_id = parse_cell
                     
                     # replace state with appropriate production according to the state id in the parse table
-                    stack.pop(0)
+                    execution_order.append(stack.pop(0))
                     production_by_id = self.iol_prod[current_production_id-1][1].split()
                     
                     # insert production atop the stack
@@ -212,15 +237,22 @@ class SyntaxAnalyzer:
                             count += 1
                 # if cell is empty, then input string is INVALID
                 else:
-                    error_statements += f"Error in line '{input_buffer[0][2]}': Expected syntax is:\n'{' '.join(self.iol_prod[current_production_id-1][1].split())}'\n"
+                    update_status(f"Error in line '{input_buffer[0][2]}': Invalid literal")
                     return
   
             # if first element of the stack is not a state, match with the first element of the input buffer                
             else:
                 # if they match, pop both elements from the stack and input buffer and continue
                 if stack[0] == input_buffer[0][0]:
-                    stack.pop(0)
+                    top = stack.pop(0)
+                    
+                    if top == 'INT_LIT' or top == 'IDENT':
+                        execution_order.append(token_stream[index])
+                    else:
+                        execution_order.append(top)
+                    
                     popped_token = input_buffer.pop(0)
+                    index += 1
                     
                     match popped_token[0]:
                         case "INT" | "STR":
@@ -232,38 +264,46 @@ class SyntaxAnalyzer:
                             statement.clear()
                             statement.append(popped_token[1])
                         case "ADD" | "SUB" | "MULT" | "DIV" | "MOD":
-                            statement.append(popped_token[1])
-                            if lexical_analyzer.itISvariable(last_ident_token[1]):
-                                if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(popped_token[1]) != "INT":
-                                    error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
-                                    semantic_case = None
                             semantic_case = "MATH"
+                            statement.append(popped_token[1])
+                            status = last_ident_token is None
+            
+                            if status == False:
+                                if last_ident_token[1] in declared_vars:
+                                    if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
+                                        error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                        semantic_case = None
                         case "IS":
                             semantic_case = "IS"
                             statement.append(popped_token[1])
                         case "IDENT":
                             statement.append(popped_token[1])
                             if semantic_case == "DECLARE":
-                                if lexical_analyzer.itISvariable(popped_token[1]):
+                                if popped_token[1] in declared_vars:
                                     error_statements += f"Duplicate variable declaration '{popped_token[1]}' in line '{popped_token[2]}'\n"
+                                else:
+                                    declared_vars.append(popped_token[1])
                                 semantic_case = None
-                            elif not lexical_analyzer.itISvariable(popped_token[1]):
+                            elif popped_token[1] not in declared_vars:
                                 error_statements += f"Undefined variable '{popped_token[1]}' in line '{popped_token[2]}'\n"
                             elif semantic_case == "IS":
                                 if lexical_analyzer.variableTYPEcheck(popped_token[1]) != lexical_analyzer.variableTYPEcheck(last_ident_token[0]):
                                     error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                 semantic_case = None
                             elif semantic_case == "MATH":
-                                if lexical_analyzer.variableTYPEcheck(popped_token[1]):
+                                if lexical_analyzer.variableTYPEcheck(popped_token[1]) != "INT":
                                     error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
                                     semantic_case = None
                             last_ident_token = popped_token
                         case "INT_LIT":
                             statement.append(popped_token[1])
-                            if lexical_analyzer.itISvariable(last_ident_token[1]):
-                                if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
-                                    error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
-                                semantic_case = None
+                            status = last_ident_token is None
+            
+                            if status == False:
+                                if last_ident_token[1] in declared_vars:
+                                    if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
+                                        error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                        semantic_case = None
                         case _:
                             statement.clear()
                             statement.append(popped_token[1])
@@ -271,17 +311,14 @@ class SyntaxAnalyzer:
                             
                 # if they do not match, then input string is INVALID
                 else:
-                    error_statements += f"Error in line '{input_buffer[0][2]}': Expected syntax is:\n'{' '.join(self.iol_prod[current_production_id-1][1].split())}'\n"
+                    update_status(f"Error in line '{input_buffer[0][2]}': Expected syntax is:\n'{' '.join(self.iol_prod[current_production_id-1][1].split())}'\n")
                     return
-                
-            # print current stack, input buffer
-            print('Stack:', stack)
-            print('Input Buffer: [', ', '.join(token for token, _, _ in input_buffer), ']\n')
 
         # If code has reached this far, then code is syntax valid
-        print("The provided code is syntax valid!")
+        update_status("The provided code is syntax valid!")
         
-        print(error_statements)
+        update_status(error_statements)
+        update_status(f"{error_statements}")
         
 tokenized_window = None  # Global variable to track the tokenized window
 tokenized_code = None
@@ -372,7 +409,7 @@ def execute_code(event=None):
     if not compiled:
         update_status("Compile the code first before executing.")
     else:
-        print("Execute Code")
+        execute(execution_order)
 
 def display_variables(variables):
     table.delete(1.0, tk.END)
@@ -504,6 +541,8 @@ toolbar.pack(fill=tk.X)
 
 # create a toplevel menu  
 menubar = tk.Menu(root)
+execution_order = []
+token_stream = []
 
 file = tk.Menu(menubar, tearoff=0)
 file.add_command(label="New (ctrl+n)", command=new_file, accelerator="ctrl+n")
