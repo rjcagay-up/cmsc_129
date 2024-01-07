@@ -62,11 +62,11 @@ class LexicalAnalyzer:
             token_list = []
             for word in words:
                 token = self.get_token(word)
-                self.tokens.append((token, word, i))
+                # self.tokens.append((token, word, i))
                 
                 if token == 'IDENT' and not(self.itISvariable(word)) and len(self.tokens) != 1:
-                    
-                    prev = self.tokens[len(self.tokens)-2]
+                    prev = self.tokens[-1]
+                    self.tokens.append((token, word, i))
                     
                     if (self.itISdatatype(prev[0])):
                         self.variables.add((word, prev[0]))
@@ -74,29 +74,23 @@ class LexicalAnalyzer:
                         # Camyl code
                         if prev[0] == 'INT':
                             token_stream.append((token, word, i, 0))
-                            # tok = list(token_stream[-1])
-                            # tok[3] = 0
-                            # token_stream[-1] = tuple(tok)
                         else:
                             token_stream.append((token, word, i, ''))
-                            # tok = list(token_stream[-1])
-                            # tok[3] = ''
-                            # token_stream[-1] = tuple(tok)
                         # Camyl code
                             
                     else:
                         self.variables.add((word, 'null'))
                         
-                elif token == 'IDENT' and len(self.tokens) == 1:
-                    
-                    # Camyl code
+                elif token == 'IDENT' and self.itISvariable(word) == True:
                     self.tokens.append((token, word, i))
                     for tok in token_stream:
                         if isinstance(tok, tuple) and tok[0] == 'IDENT' and tok[1] == 'num':
                             token_stream.append(tok)
                             break
                     self.variables.add((word, 'null'))
-                    # Camyl code
+                else:
+                    self.tokens.append((token, word, i))
+                    token_stream.append((token, word, i))
 
     def get_token(self, word):
         if (self.itISkeyword(word)):
@@ -233,7 +227,6 @@ class SyntaxAnalyzer:
                     # Camyl code
                     
                     # replace state with appropriate production according to the state id in the parse table
-                    stack.pop(0)
                     production_by_id = self.iol_prod[current_production_id-1][1].split()
                     
                     # insert production atop the stack
@@ -280,18 +273,19 @@ class SyntaxAnalyzer:
                             statement.clear()
                             statement.append(popped_token[1])
                         case "ADD" | "SUB" | "MULT" | "DIV" | "MOD":
-                            statement.append(popped_token[1])
-                            if last_ident_token[1] in declared_vars:
-                                if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
-                                    semantic_case = None
                             semantic_case = "MATH"
+                            statement.append(popped_token[1])
+                            status = last_ident_token is None
+            
+                            if status == False:
+                                if last_ident_token[1] in declared_vars:
+                                    if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
+                                        error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                        semantic_case = None
                         case "IS":
                             semantic_case = "IS"
                             statement.append(popped_token[1])
                         case "IDENT":
-                            print(popped_token[1])
-                            print(semantic_case)
                             statement.append(popped_token[1])
                             if semantic_case == "DECLARE":
                                 if popped_token[1] in declared_vars:
@@ -313,10 +307,13 @@ class SyntaxAnalyzer:
                             last_ident_token = popped_token
                         case "INT_LIT":
                             statement.append(popped_token[1])
-                            if last_ident_token[1] in declared_vars:
-                                if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
-                                    error_statements += f"Type error '{" ".join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]}' is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
-                                    semantic_case = None
+                            status = last_ident_token is None
+            
+                            if status == False:
+                                if last_ident_token[1] in declared_vars:
+                                    if semantic_case == "IS" and lexical_analyzer.variableTYPEcheck(last_ident_token[1]) != "INT":
+                                        error_statements += f"Type error '{' '.join(statement)}' in line '{popped_token[2]}' '{last_ident_token[1]} 'is of type '{lexical_analyzer.variableTYPEcheck(last_ident_token[1])}'\n"
+                                        semantic_case = None
                         case _:
                             statement.clear()
                             statement.append(popped_token[1])
