@@ -1,4 +1,5 @@
 import tkinter as tk
+from PE_04_Startprogress import update_status
 
 # Recursive function for program execution
 def execute(order):
@@ -6,6 +7,7 @@ def execute(order):
     
     while stack_top != '$':
         print(f"k: {order}")
+        update_status("Executing program...")
         if stack_top == "var": # if variable is defined
             order.pop(0)            # pops var
             order.pop(0)            # pops INT or STR
