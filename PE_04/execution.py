@@ -32,6 +32,7 @@ def execute(order):
             order.pop(0)
             expr = execute(order)
             print(expr)
+            order.pop(0)
             stack_top = order[0]
         elif stack_top == 'asn':
             order.pop(0) # pops asn
@@ -46,11 +47,11 @@ def execute(order):
                 
                 expr = execute(order)
                 
-                order = update_tkn(order,identName,val)
+                order = update_tkn(order,identName,expr)
                         
                 order.pop(0)
                 stack_top = order[0]
-                
+        #    
         elif stack_top == 'expr':
             order.pop(0)
             expr = execute(order)
@@ -59,14 +60,66 @@ def execute(order):
             print("\n")
             order.pop(0)
             stack_top = order[0]
-        elif stack_top == 'ADD':
+
+        # Mathematical Operations
+        elif stack_top == 'ADD': # Addtion
             order.pop(0)
             expr1 = execute(order)
             order.pop(0)
+            if expr1 is False:
+                return False
+
             expr2 = execute(order)
             order.pop(0)
+            if expr2 is False:
+                return False
+            
             return expr1 + expr2
-        # Continue here for other num expressions
+        elif stack_top == 'SUB': #Subtraction
+            order.pop(0)
+            expr1 = execute(order)
+            order.pop(0)
+            if expr1 is False:
+                return False
+
+            expr2 = execute(order)
+            order.pop(0)
+            if expr2 is False:
+                return False
+            return expr1 - expr2
+        elif stack_top == 'MULT': #Multiplication
+            order.pop(0)
+            expr1 = execute(order)
+            order.pop(0)
+            if expr1 is False:
+                return False
+
+            expr2 = execute(order)
+            order.pop(0)
+            if expr2 is False:
+                return False
+            return expr1 * expr2
+        elif stack_top == 'DIV': #Division
+            order.pop(0)
+            expr1 = execute(order)
+            order.pop(0)
+            if expr1 is False:
+                return False
+
+            expr2 = execute(order)
+            order.pop(0)
+            if expr2 is False:
+                return False
+            elif expr2 == 0:
+                return False
+            
+            quotient = expr1 / expr2
+            if isinstance(quotient,float):
+                return round(quotient)
+            else:
+                return quotient
+        
+
         elif stack_top[0] == 'INT_LIT':
             return int(stack_top[1]) 
         elif stack_top[0] == 'IDENT':
@@ -75,6 +128,8 @@ def execute(order):
             # print(stack_top)
             order.pop(0)
             stack_top = order[0]
+
+    print(f"h: {order}")
 
 def update_tkn(order,identName,val):
     for i, tok in enumerate(order):
