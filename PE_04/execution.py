@@ -12,11 +12,7 @@ def execute(order):
             ident[3] = val
             order[0] = tuple(ident)
             
-            for tok in order:
-                if isinstance(tok, tuple) and tok[0] == 'IDENT' and tok[1] == identName:
-                    token = list(tok)
-                    token[3] = val
-                    tok = tuple(token)
+            order = update_tkn(order,identName,val)
             
             order.pop(0)
             order.pop(0) # remove varend
@@ -26,11 +22,7 @@ def execute(order):
                 val = execute(order)
                 print(f"val: {val}")
                 
-                for i, tok in enumerate(order):
-                    if isinstance(tok, tuple) and tok[0] == 'IDENT' and tok[1] == identName:
-                        token = list(tok)
-                        token[3] = val
-                        order[i] = tuple(token)
+                order = update_tkn(order,identName,val)
                 
                 order.pop(0)
             
@@ -54,11 +46,7 @@ def execute(order):
                 
                 expr = execute(order)
                 
-                for i, tok in enumerate(order):
-                    if isinstance(tok, tuple) and tok[0] == 'IDENT' and tok[1] == identName:
-                        token = list(tok)
-                        token[3] = expr
-                        order[i] = tuple(token)
+                order = update_tkn(order,identName,val)
                         
                 order.pop(0)
                 stack_top = order[0]
@@ -87,8 +75,14 @@ def execute(order):
             # print(stack_top)
             order.pop(0)
             stack_top = order[0]
-        
-# def expr(order):
+
+def update_tkn(order,identName,val):
+    for i, tok in enumerate(order):
+        if isinstance(tok, tuple) and tok[0] == 'IDENT' and tok[1] == identName:
+            token = list(tok)
+            token[3] = val
+            order[i] = tuple(token)
+    return order
     
     
     
