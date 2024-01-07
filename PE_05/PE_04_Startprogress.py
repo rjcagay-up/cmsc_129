@@ -120,7 +120,7 @@ class LexicalAnalyzer:
         for i, index in enumerate(error_indices):
             self.error_statements += f"Error {i + 1} - {error_messages[i]}\n"
     
-class SyntaxAnalyzer:
+class SyntaxSemanticAnalyzer:
     def __init__(self):
         # Production rules of the IOL PL
         self.iol_prod = [
@@ -373,8 +373,6 @@ def compile_code(event=None):
     lexical_analyzer.analyze(code)
 
     tokenized_code = ' '.join(token for token, _, _ in lexical_analyzer.tokens)
-    
-    print(tokenized_code)
 
     if 'ERR_LEX' in tokenized_code:
         lexical_analyzer.show_errlex()
@@ -400,8 +398,8 @@ def compile_code(event=None):
         
     # After compilation, syntax analysis
     
-    syntax_analyzer = SyntaxAnalyzer()
-    syntax_analyzer.analyze(lexical_analyzer.tokens, lexical_analyzer.error_statements, lexical_analyzer)
+    syntax_semantic_analyzer = SyntaxSemanticAnalyzer()
+    syntax_semantic_analyzer.analyze(lexical_analyzer.tokens, lexical_analyzer.error_statements, lexical_analyzer)
 
 # Function for showing the tokenized code
 def show_tokenized_code(event=None):
