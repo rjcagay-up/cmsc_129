@@ -16,6 +16,7 @@ class LexicalAnalyzer:
         self.datatypes = ('INT', 'STR')
         self.tokens = []
         self.variables = set()
+        self.error_statements = ''
         
     def itISkeyword(self, word):
         if word in self.keywords:
@@ -104,13 +105,20 @@ class LexicalAnalyzer:
             return 'ERR_LEX'
         
     def show_errlex(self):
-        errlex = [(word,line) for token, word, line in self.tokens if token == 'ERR_LEX']
-        error_message = "Unknown words detected:"
+        # self.error_statements = ''
         
-        for error in errlex:
-            error_message += "\nUnknown word '" + str(error[0]) + "' detected at line " + str(error[1])
+        # errlex = [(word,line) for token, word, line in self.tokens if token == 'ERR_LEX']
+        # self.error_statements = "\nUnknown words detected:"
+        
+        # for error in errlex:
+        #     self.error_statements += "\nUnknown word '" + str(error[0]) + "' detected at line " + str(error[1])
             
-        return error_message
+        error_indices = [i for i, token in enumerate(self.tokens) if token[0] == 'ERR_LEX']
+        error_messages = [f"Unknown word '{token[1]}' detected at line {token[2]}" for token in self.tokens if token[0] == 'ERR_LEX']
+
+        self.error_statements = "Unknown words detected:\n"
+        for i, index in enumerate(error_indices):
+            self.error_statements += f"Error {i + 1} - {error_messages[i]}\n"
     
 class SyntaxAnalyzer:
     def __init__(self):
@@ -174,10 +182,9 @@ class SyntaxAnalyzer:
             "expr": ["", "", "", "", "", "", "", "", "", 15, 16, 17, 18, 19, 20, 21],
         }
 
-    def analyze(self, tokens, lexical_analyzer):
+    def analyze(self, tokens, error_statements, lexical_analyzer):
         
         # Initializing needed variables
-        error_statements = ""
         declared_vars = list()
         statement = list()
         semantic_case = None
@@ -202,10 +209,15 @@ class SyntaxAnalyzer:
         
         # Goes through each of the tokens in the input buffer until nothing is left or an error occurs
         while len(input_buffer) != 0:
+            
+            if input_buffer[0][0] == 'ERR_LEX':
+                input_buffer.pop(0)
+                continue
         
             # Checks if current token in the input buffer exists as possible input  
             if not input_buffer[0][0] in self.iol_ptbl["terminals"]:
-                update_status(f"\n'{input_buffer[0][0]}' does not exist in the parse table\n") # Make error statement
+                error_statements += f"\n'{input_buffer[0][0]}' does not exist in the parse table\n" # Make error statement
+                update_status(error_statements)
                 return
             # if token exists, then get index for reference
             else:
@@ -239,7 +251,8 @@ class SyntaxAnalyzer:
                             count += 1
                 # if cell is empty, then input string is INVALID
                 else:
-                    update_status(f"Error in line '{input_buffer[0][2]}': Invalid literal")
+                    error_statements += f"Error in line '{input_buffer[0][2]}': Invalid literal"
+                    update_status(error_statements)
                     return
   
             # if first element of the stack is not a state, match with the first element of the input buffer                
@@ -320,10 +333,11 @@ class SyntaxAnalyzer:
                             
                 # if they do not match, then input string is INVALID
                 else:
-                    update_status(f"Error in line '{input_buffer[0][2]}': Expected syntax is:\n'{' '.join(self.iol_prod[current_production_id-1][1].split())}'\n")
+                    error_statements += f"Error in line '{input_buffer[0][2]}': Expected syntax is:\n'{' '.join(self.iol_prod[current_production_id-1][1].split())}'\n"
+                    update_status(error_statements)
                     return
 
-        if error_statements != "":
+        if error_statements:
             update_status(error_statements)
         else:
             update_status("The provided code is syntax valid!\n")
@@ -359,27 +373,18 @@ def compile_code(event=None):
     lexical_analyzer.analyze(code)
 
     tokenized_code = ' '.join(token for token, _, _ in lexical_analyzer.tokens)
-
-    update_status("Code tokenized successfully")
-    compiled = True
+    
+    print(tokenized_code)
 
     if 'ERR_LEX' in tokenized_code:
-         # Display where and what the lexical errors are
-        error_indices = [i for i, token in enumerate(lexical_analyzer.tokens) if token[0] == 'ERR_LEX']
-        error_messages = [f"Unknown word '{token[1]}' detected at line {token[2]}" for token in lexical_analyzer.tokens if token[0] == 'ERR_LEX']
-
-        error_message = "Lexical Errors:\n"
-        for i, index in enumerate(error_indices):
-            error_message += f"Error {i + 1} - {error_messages[i]}\n"
-
-        update_status(error_message)
-        print(f"{error_message}")
+        lexical_analyzer.show_errlex()
     else:
-        update_status("Code tokenized successfully")
+        update_status("Code tokenized successfully without errors")
+    
+    compiled = True
     
     display_variables(lexical_analyzer.variables)
     
-    compiled = True
     # Save the compiled code to a .tkn file
     if editor_path:
         # Extract the file path without the extension and add .tkn
@@ -396,7 +401,7 @@ def compile_code(event=None):
     # After compilation, syntax analysis
     
     syntax_analyzer = SyntaxAnalyzer()
-    syntax_analyzer.analyze(lexical_analyzer.tokens, lexical_analyzer)
+    syntax_analyzer.analyze(lexical_analyzer.tokens, lexical_analyzer.error_statements, lexical_analyzer)
 
 # Function for showing the tokenized code
 def show_tokenized_code(event=None):
@@ -570,7 +575,7 @@ compile.add_command(label="Show Tokenized Code (F10)", command=show_tokenized_co
 compile.add_separator()
 menubar.add_cascade(label="Compile", menu=compile, accelerator="F8")
 
-menubar.add_command(label="Execute", command=execute_code, accelerator="F12")
+menubar.add_command(label="Execute (F12)", command=execute_code, accelerator="F12")
 
 root.bind('<Control-n>', new_file)
 root.bind('<Control-o>', open_file)
