@@ -1,26 +1,28 @@
 import tkinter as tk
 
-
+# Recursive function for program execution
 def execute(order):
     stack_top = order[0]
     
     while stack_top != '$':
         print(f"k: {order}")
-        if stack_top == "var":
-            order.pop(0)
-            order.pop(0)
-            ident = list(order[0])
-            identName = ident[1]
-            val = execute(order)
-            ident[3] = val
+        if stack_top == "var": # if variable is defined
+            order.pop(0)            # pops var
+            order.pop(0)            # pops INT or STR
+
+            ident = list(order[0])  # takes the IDENT token 
+            identName = ident[1]    # gets lexeme of IDENT token
+            val = execute(order)    # gets value to be defined on IDENT
+
+            ident[3] = val              # sets IDENT value
             order[0] = tuple(ident)
             
-            order = update_tkn(order,identName,val)
+            order = update_tkn(order,identName,val) # updates IDENT token value
             
-            order.pop(0)
-            order.pop(0) # remove varend
+            order.pop(0)    # pops IDENT token
+            order.pop(0)    # pops varend
             
-            if order[0] == 'IS':
+            if order[0] == 'IS': #if variable definition is INT IDENT IS value
                 order.pop(0)
                 val = execute(order)
                 print(f"val: {val}")
@@ -29,7 +31,7 @@ def execute(order):
                 
                 order.pop(0)
             
-            stack_top = order[0]
+            stack_top = order[0]    # Reinitializes stack_top
         elif stack_top == 'out':
             order.pop(0)
             order.pop(0)
