@@ -87,7 +87,6 @@ class LexicalAnalyzer:
                         if isinstance(tok, tuple) and tok[0] == 'IDENT' and tok[1] == 'num':
                             token_stream.append(tok)
                             break
-                    self.variables.add((word, 'null'))
                 else:
                     self.tokens.append((token, word, i))
                     token_stream.append((token, word, i))
