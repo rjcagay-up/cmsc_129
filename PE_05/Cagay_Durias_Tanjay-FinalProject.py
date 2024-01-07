@@ -270,8 +270,6 @@ class SyntaxAnalyzer:
                     index += 1
                     # Camyl code
                     
-                    # Honestly, copy pasted lng gyud ni siya, so medj gamay gamay lng pud akoang understanding of this part
-                    # Basic concept niya is that semantic_case var is used to store that current "scenario" encountered in a line
                     # Depending on the scenario, different "if statements" are taken into account
                     # error_statements is used to store errors encountered by the lexical analyzer
                     match popped_token[0]:
