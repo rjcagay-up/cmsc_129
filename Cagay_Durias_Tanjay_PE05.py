@@ -72,12 +72,12 @@ class LexicalAnalyzer:
                     if (self.itISdatatype(prev[0])):
                         self.variables.add((word, prev[0]))
                         
-                        # Camyl code
+                        
                         if prev[0] == 'INT':
                             token_stream.append((token, word, i, 0))
                         else:
                             token_stream.append((token, word, i, ''))
-                        # Camyl code
+                        
                             
                     else:
                         self.variables.add((word, 'null'))
@@ -120,7 +120,7 @@ class LexicalAnalyzer:
         for i, index in enumerate(error_indices):
             self.error_statements += f"Error {i + 1} - {error_messages[i]}\n"
     
-class SyntaxAnalyzer:
+class SyntaxSemanticAnalyzer:
     def __init__(self):
         # Production rules of the IOL PL
         self.iol_prod = [
@@ -199,9 +199,9 @@ class SyntaxAnalyzer:
         # Initialize current production id to initial state
         current_production_id = 1
         
-        # Camyl code
+        
         index = 0
-        # Camyl code
+        
         
         # print initial stack and input buffer
         # print('Initial Stack:', stack)
@@ -233,9 +233,9 @@ class SyntaxAnalyzer:
                 if parse_cell != '':
                     current_production_id = parse_cell
                     
-                    # Camyl code
+                    
                     execution_order.append(stack.pop(0))
-                    # Camyl code
+                    
                     
                     # replace state with appropriate production according to the state id in the parse table
                     production_by_id = self.iol_prod[current_production_id-1][1].split()
@@ -260,7 +260,7 @@ class SyntaxAnalyzer:
                 # if they match, pop both elements from the stack and input buffer and continue
                 if stack[0] == input_buffer[0][0]:
                     
-                    # Camyl code
+                    
                     top = stack.pop(0)
                     if top == 'INT_LIT' or top == 'IDENT':
                         execution_order.append(token_stream[index])
@@ -269,7 +269,7 @@ class SyntaxAnalyzer:
                     
                     popped_token = input_buffer.pop(0)
                     index += 1
-                    # Camyl code
+                    
                     
                     # Honestly, copy pasted lng gyud ni siya, so medj gamay gamay lng pud akoang understanding of this part
                     # Basic concept niya is that semantic_case var is used to store that current "scenario" encountered in a line
@@ -373,8 +373,6 @@ def compile_code(event=None):
     lexical_analyzer.analyze(code)
 
     tokenized_code = ' '.join(token for token, _, _ in lexical_analyzer.tokens)
-    
-    print(tokenized_code)
 
     if 'ERR_LEX' in tokenized_code:
         lexical_analyzer.show_errlex()
@@ -400,8 +398,8 @@ def compile_code(event=None):
         
     # After compilation, syntax analysis
     
-    syntax_analyzer = SyntaxAnalyzer()
-    syntax_analyzer.analyze(lexical_analyzer.tokens, lexical_analyzer.error_statements, lexical_analyzer)
+    syntax_semantic_analyzer = SyntaxSemanticAnalyzer()
+    syntax_semantic_analyzer.analyze(lexical_analyzer.tokens, lexical_analyzer.error_statements, lexical_analyzer)
 
 # Function for showing the tokenized code
 def show_tokenized_code(event=None):
@@ -555,10 +553,10 @@ toolbar.pack(fill=tk.X)
 
 # create a toplevel menu  
 menubar = tk.Menu(root)
-# Camyl code
+
 execution_order = []
 token_stream = []
-# Camyl code
+
 
 file = tk.Menu(menubar, tearoff=0)
 file.add_command(label="New (ctrl+n)", command=new_file, accelerator="ctrl+n")
