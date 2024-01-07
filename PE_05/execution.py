@@ -1,3 +1,6 @@
+import tkinter as tk
+
+
 def execute(order):
     stack_top = order[0]
     
@@ -51,6 +54,39 @@ def execute(order):
                         
                 order.pop(0)
                 stack_top = order[0]
+
+            elif order[0] == 'BEG':
+                order.pop(0)  # pop BEG
+
+                ident = list(order[0])
+                identName = ident[1]
+                
+                # Create a Tkinter window
+                window = tk.Toplevel()
+                window.title("User Input")
+
+                # Initialize an input variable
+                window.user_input = ""
+
+                # Create an entry widget for user input
+                entry = tk.Entry(window)
+                entry.pack(pady=10)
+
+                # Create a button to submit the input
+                submit_button = tk.Button(window, text="Submit", command=lambda: get_user_input(window, entry.get()))
+                submit_button.pack()
+
+                # Start the Tkinter main loop
+                window.wait_window(window)
+
+                # Access the updated input variable outside the Tkinter loop
+                print(f"i: {window.user_input}")
+
+                # Update the order with the user input
+                order = update_tkn(order, identName, window.user_input)
+                order.pop(0)
+                stack_top = order[0]
+
         #    
         elif stack_top == 'expr':
             order.pop(0)
@@ -138,6 +174,10 @@ def update_tkn(order,identName,val):
             token[3] = val
             order[i] = tuple(token)
     return order
+
+def get_user_input(window, entry):
+    window.user_input = entry
+    window.destroy()
     
     
     
