@@ -4,6 +4,7 @@ from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
 from tkinter import messagebox
 from tkinter import *  
+from execution import *
 
 editor_path = None  # Variable to track the file path associated with the editor content
 # Define a variable to track whether a new file has been created
@@ -69,11 +70,33 @@ class LexicalAnalyzer:
                     
                     if (self.itISdatatype(prev[0])):
                         self.variables.add((word, prev[0]))
+                        
+                        # Camyl code
+                        if prev[0] == 'INT':
+                            token_stream.append((token, word, i, 0))
+                            # tok = list(token_stream[-1])
+                            # tok[3] = 0
+                            # token_stream[-1] = tuple(tok)
+                        else:
+                            token_stream.append((token, word, i, ''))
+                            # tok = list(token_stream[-1])
+                            # tok[3] = ''
+                            # token_stream[-1] = tuple(tok)
+                        # Camyl code
+                            
                     else:
                         self.variables.add((word, 'null'))
                         
                 elif token == 'IDENT' and len(self.tokens) == 1:
+                    
+                    # Camyl code
+                    self.tokens.append((token, word, i))
+                    for tok in token_stream:
+                        if isinstance(tok, tuple) and tok[0] == 'IDENT' and tok[1] == 'num':
+                            token_stream.append(tok)
+                            break
                     self.variables.add((word, 'null'))
+                    # Camyl code
 
     def get_token(self, word):
         if (self.itISkeyword(word)):
@@ -176,6 +199,10 @@ class SyntaxAnalyzer:
         # Initialize current production id to initial state
         current_production_id = 1
         
+        # Camyl code
+        index = 0
+        # Camyl code
+        
         # print initial stack and input buffer
         # print('Initial Stack:', stack)
         # print('Initial Input Buffer: [', ', '.join(token for token, _, _ in input_buffer), ']\n')
@@ -201,6 +228,10 @@ class SyntaxAnalyzer:
                 if parse_cell != '':
                     current_production_id = parse_cell
                     
+                    # Camyl code
+                    execution_order.append(stack.pop(0))
+                    # Camyl code
+                    
                     # replace state with appropriate production according to the state id in the parse table
                     stack.pop(0)
                     production_by_id = self.iol_prod[current_production_id-1][1].split()
@@ -223,9 +254,17 @@ class SyntaxAnalyzer:
             else:
                 # if they match, pop both elements from the stack and input buffer and continue
                 if stack[0] == input_buffer[0][0]:
-                    stack.pop(0)
-                    popped_token = input_buffer.pop(0)
                     
+                    # Camyl code
+                    top = stack.pop(0)
+                    if top == 'INT_LIT' or top == 'IDENT':
+                        execution_order.append(token_stream[index])
+                    else:
+                        execution_order.append(top)
+                    
+                    popped_token = input_buffer.pop(0)
+                    index += 1
+                    # Camyl code
                     
                     # Honestly, copy pasted lng gyud ni siya, so medj gamay gamay lng pud akoang understanding of this part
                     # Basic concept niya is that semantic_case var is used to store that current "scenario" encountered in a line
@@ -382,7 +421,8 @@ def execute_code(event=None):
     if not compiled:
         update_status("Compile the code first before executing.")
     else:
-        print("Execute Code")
+        execute(execution_order)
+        
 
 def display_variables(variables):
     table.delete(1.0, tk.END)
@@ -514,6 +554,10 @@ toolbar.pack(fill=tk.X)
 
 # create a toplevel menu  
 menubar = tk.Menu(root)
+# Camyl code
+execution_order = []
+token_stream = []
+# Camyl code
 
 file = tk.Menu(menubar, tearoff=0)
 file.add_command(label="New (ctrl+n)", command=new_file, accelerator="ctrl+n")
